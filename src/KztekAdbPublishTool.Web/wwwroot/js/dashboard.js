@@ -196,7 +196,8 @@
         pollTimer = setInterval(function () {
             fetch('/api/devices')
                 .then(function (r) { return r.ok ? r.json() : null; })
-                .then(function (devices) { if (devices) renderDevices(devices); })
+                // FIX-3.1c: backend trả {ok, data:[...]}, không phải array trực tiếp
+                .then(function (resp) { if (resp && Array.isArray(resp.data)) renderDevices(resp.data); })
                 .catch(function () { /* ignore transient errors */ });
         }, POLL_INTERVAL_MS);
     }

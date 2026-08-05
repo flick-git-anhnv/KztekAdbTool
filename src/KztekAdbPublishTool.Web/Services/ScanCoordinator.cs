@@ -115,11 +115,13 @@ public sealed class ScanCoordinator
                     var ipPort = $"{ip}:{port}";
                     _logger.LogInformation("ScanCoordinator: found {IpPort}", ipPort);
                     // Không truyền ct — tránh mất event khi cancel được gọi ngay sau khi found
-                    await _hub.Clients.All.SendAsync("ScanFound", new { ipPort });
+                    // FIX-3.1a: gửi primitive args thay vì anonymous object để khớp JS signature:
+                    //   ScanFound(string ipPort)
+                    await _hub.Clients.All.SendAsync("ScanFound", ipPort);
                 }
 
-                await _hub.Clients.All.SendAsync("ScanProgress",
-                    new { current, total, foundCount = currentFound });
+                // FIX-3.1a: gửi (found, scanned, total) khớp JS: function(found, scanned, total)
+                await _hub.Clients.All.SendAsync("ScanProgress", currentFound, current, total);
             }
             catch (OperationCanceledException) { /* scan bị cancel */ }
             catch (Exception ex)
@@ -150,7 +152,8 @@ public sealed class ScanCoordinator
         _logger.LogInformation("ScanCoordinator: completed. Scanned={Scanned}, Found={Found}", finalScanned, finalFound);
 
         // Push ScanCompleted — không dùng ct (đã có thể bị cancel)
-        await _hub.Clients.All.SendAsync("ScanCompleted", new { total, found = finalFound });
+        // FIX-3.1a: gửi (total, found) khớp JS: function(total, found)
+        await _hub.Clients.All.SendAsync("ScanCompleted", total, finalFound);
     }
 
     private static async Task<bool> TcpProbeAsync(string ip, int port, int timeoutMs, CancellationToken ct)

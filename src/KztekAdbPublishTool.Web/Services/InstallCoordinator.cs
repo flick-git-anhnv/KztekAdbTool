@@ -93,10 +93,12 @@ public sealed class InstallCoordinator
 
         try
         {
-            await Push("InstallProgress", new { serial, current = 0, total = 5, message = "Đang lấy danh sách package..." });
+            // FIX-3.1b: gửi primitive args thay vì anonymous object để khớp JS:
+            //   InstallProgress(string serial, int percent, string msg)  — percent 0-100
+            await _hub.Clients.All.SendAsync("InstallProgress", serial, 0,  "Đang lấy danh sách package...");
             var before = await _adb.ListThirdPartyPackagesAsync(serial, ct);
 
-            await Push("InstallProgress", new { serial, current = 1, total = 5, message = "Đang cài APK..." });
+            await _hub.Clients.All.SendAsync("InstallProgress", serial, 20, "Đang cài APK...");
             var installResult = await _adb.InstallApkAsync(serial, apkPath, ct);
 
             if (!installResult.Success)
@@ -106,16 +108,16 @@ public sealed class InstallCoordinator
                 return;
             }
 
-            await Push("InstallProgress", new { serial, current = 2, total = 5, message = "Đang kiểm tra kết quả..." });
+            await _hub.Clients.All.SendAsync("InstallProgress", serial, 40, "Đang kiểm tra kết quả...");
             var after = await _adb.ListThirdPartyPackagesAsync(serial, ct);
 
             // Tìm package vừa được cài (so sánh before/after)
             var installedPkg = after.Except(before).FirstOrDefault() ?? packageName;
 
-            await Push("InstallProgress", new { serial, current = 3, total = 5, message = "Đang lấy version..." });
+            await _hub.Clients.All.SendAsync("InstallProgress", serial, 60, "Đang lấy version...");
             var version = await _adb.GetPackageVersionAsync(serial, installedPkg, ct);
 
-            await Push("InstallProgress", new { serial, current = 4, total = 5, message = "Đang mở ứng dụng..." });
+            await _hub.Clients.All.SendAsync("InstallProgress", serial, 80, "Đang mở ứng dụng...");
             var launchResult = await _adb.LaunchAppAsync(serial, installedPkg, ct);
             if (!launchResult.Success)
             {
@@ -141,8 +143,11 @@ public sealed class InstallCoordinator
     {
         var now = DateTime.UtcNow;
 
-        await Push("InstallProgress", new { serial, current = 5, total = 5, message = status });
-        await Push("DeviceInstalled", new { serial, status, version, time = now });
+        // FIX-3.1b: percent=100 khi hoàn thành; DeviceInstalled gửi bool success (không phải string status)
+        //   khớp JS: DeviceInstalled(string serial, bool success, string version)
+        await _hub.Clients.All.SendAsync("InstallProgress", serial, 100, status);
+        var success = status == "Thành công";
+        await _hub.Clients.All.SendAsync("DeviceInstalled", serial, success, version);
 
         // Cập nhật DeviceState + DB
         _repo.UpdateInstallResult(serial, status, now, version);
@@ -165,7 +170,4 @@ public sealed class InstallCoordinator
         }
     }
 
-    // Dùng CancellationToken.None cho SignalR push để tránh bị cancel khi timeout CTS đã kích hoạt
-    private Task Push(string method, object data) =>
-        _hub.Clients.All.SendAsync(method, data);
 }
