@@ -2,8 +2,8 @@
 step: 3.4
 title: Ghi chú bàn giao DevOps (Dockerfile + docker-compose — NGOÀI SCOPE plan này)
 assignee: code-migrator
-status: todo
-completed_at: —
+status: done
+completed_at: 2026-08-05
 deps: [3.3]
 ---
 
@@ -24,7 +24,7 @@ Giao ticket DevOps Engineer / DevOps Lead theo WF-DEVOPS.
 - `docs/devops/HANDOFF-web-docker.md`
 
 ## Handoff Payload
-- Đã làm: —
-- do_not_redo: —
-- watch_out: —
-- next_inputs: Ticket bàn giao DevOps Lead mở WF-DEVOPS
+- Đã làm: Viết `docs/devops/HANDOFF-web-docker.md` đầy đủ 11 mục (base image, adb install, ENV mapping AdbSettings, volume, network host, port, healthcheck, compose structure, DoD test).
+- do_not_redo: Không cần viết lại spec — DevOps Engineer đọc thẳng `docs/devops/HANDOFF-web-docker.md` để viết Dockerfile/compose thật.
+- watch_out: `network_mode: host` CHỈ chạy đúng trên Linux host thật, KHÔNG dùng Docker Desktop Windows/Mac để build/test cuối. `AdbSettings.AdbPath` mặc định `/opt/platform-tools/adb` — phải override ENV `Adb__AdbPath=/usr/bin/adb` hoặc symlink.
+- next_inputs: `docs/devops/HANDOFF-web-docker.md` là input chính cho DevOps Engineer (WF-DEVOPS) viết Dockerfile + docker-compose.yml.
