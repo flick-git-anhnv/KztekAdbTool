@@ -324,13 +324,13 @@
                 appendLog('Đang kết nối tới ' + ipPort + '...');
                 try {
                     const r = await apiPost('/api/devices/connect', { ipPort: ipPort });
-                    if (r.ok) {
-                        appendLog('Đã gửi lệnh kết nối ' + ipPort);
-                        showToast('Đã gửi lệnh kết nối ' + ipPort, 'success');
+                    const data = await r.json();
+                    if (data.ok) {
+                        appendLog('Đã kết nối ' + ipPort + (data.data ? ': ' + data.data : ''));
+                        showToast('Đã kết nối ' + ipPort, 'success');
                     } else {
-                        const txt = await r.text();
-                        appendLog('Lỗi kết nối ' + ipPort + ': ' + txt);
-                        showToast('Lỗi kết nối: ' + txt, 'danger');
+                        appendLog('Lỗi kết nối ' + ipPort + ': ' + (data.error || 'Không rõ lỗi'));
+                        showToast('Lỗi kết nối: ' + (data.error || 'Không rõ lỗi'), 'danger');
                     }
                 } catch (ex) {
                     appendLog('Lỗi: ' + ex.message);

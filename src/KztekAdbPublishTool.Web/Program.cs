@@ -17,6 +17,12 @@ builder.WebHost.ConfigureKestrel(options =>
     options.Limits.MaxRequestBodySize = 500_000_000;
 });
 
+// ── Form options: nâng giới hạn multipart body lên 500 MB (mặc định 128 MB) ──
+builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = 500_000_000;
+});
+
 // ── Services ─────────────────────────────────────────────────────────────────
 builder.Services.AddSingleton<AdbService>();
 builder.Services.AddSingleton<DeviceRepository>();

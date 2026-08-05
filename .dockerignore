@@ -1,0 +1,39 @@
+# Build artifacts
+**/bin/
+**/obj/
+
+# IDE & editor folders
+**/.vs/
+**/.vscode/
+**/.idea/
+
+# Git
+.git/
+.github/
+.gitignore
+
+# Dev-only files (không cần trong image)
+**/appsettings.Development.json
+**/*.db
+**/uploads-dev/
+**/temp/
+
+# Docs
+*.md
+*.docx
+*.pdf
+
+# Scripts & tools không liên quan
+scripts/
+setup-*.ps1
+agents-view.html
+code-graph/
+_workspace/
+tests/
+
+# Windows platform-tools (không dùng trong Linux container)
+platform-tools/
+platform-tools.rar
+
+# Logs
+**/*.log

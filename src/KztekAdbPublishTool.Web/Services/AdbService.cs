@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Text;
 using KztekAdbPublishTool.Web.Configuration;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Options;
 
 namespace KztekAdbPublishTool.Web.Services;
@@ -29,9 +30,13 @@ public sealed class AdbService
 {
     private readonly string _adbPath;
 
-    public AdbService(IOptions<AdbSettings> options)
+    public AdbService(IOptions<AdbSettings> options, IWebHostEnvironment env)
     {
-        _adbPath = options.Value.AdbPath;
+        var raw = options.Value.AdbPath;
+        // Nếu là đường dẫn tương đối → resolve theo ContentRootPath (đảm bảo đúng dù chạy từ thư mục nào)
+        _adbPath = Path.IsPathRooted(raw)
+            ? raw
+            : Path.GetFullPath(Path.Combine(env.ContentRootPath, raw));
     }
 
     public async Task<AdbCommandResult> RunAsync(string arguments, int timeoutMs = 30000, CancellationToken ct = default)

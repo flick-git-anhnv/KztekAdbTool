@@ -1,0 +1,24 @@
+services:
+  kztek-adb-tool:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: kztek-adb-tool:latest
+    container_name: kztek-adb-tool
+    ports:
+      - "8080:8080"
+    volumes:
+      # Persist SQLite DB và APK uploads qua restart
+      - adb_data:/app/data
+      - adb_uploads:/app/uploads
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://0.0.0.0:8080
+    restart: unless-stopped
+    # network_mode: host  # Bỏ comment nếu cần ADB scan UDP broadcast (không cần cho WiFi TCP/IP)
+
+volumes:
+  adb_data:
+    driver: local
+  adb_uploads:
+    driver: local
