@@ -1,0 +1,13 @@
+# .NET build artifacts
+bin/
+obj/
+
+# Visual Studio
+.vs/
+
+# Local temp / scratch (project convention — see CLAUDE.md §temp)
+temp/
+
+# User-specific files
+*.user
+*.suo
