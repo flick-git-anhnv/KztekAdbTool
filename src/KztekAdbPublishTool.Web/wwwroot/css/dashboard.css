@@ -1,0 +1,147 @@
+/* ═══════════════════════════════════════════════════════
+   KZTEK ADB Publish Tool — Dashboard CSS
+   Brand: Navy #251C53 / Cam #F05922
+═══════════════════════════════════════════════════════ */
+
+/* ── Toolbar ──────────────────────────────────────────── */
+.kz-toolbar {
+    background-color: #ffffff;
+    border: 1px solid var(--kz-gray);
+    border-radius: 6px;
+    padding: 10px 14px 8px 14px;
+}
+
+/* ── Filter bar ───────────────────────────────────────── */
+.kz-filter-bar {
+    background-color: #f8f9fa;
+    border: 1px solid var(--kz-gray);
+    border-radius: 4px;
+    padding: 6px 12px;
+}
+
+/* ── Device grid ──────────────────────────────────────── */
+.kz-grid-container {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid var(--kz-gray);
+    border-radius: 4px;
+}
+
+#device-table thead th {
+    background-color: var(--kz-navy);
+    color: #ffffff;
+    font-size: 0.80rem;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+#device-table td {
+    font-size: 0.83rem;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+#device-table tbody tr.offline-row td {
+    color: #888888;
+}
+
+#device-table tbody tr:hover {
+    background-color: var(--kz-navy-pale) !important;
+    cursor: pointer;
+}
+
+/* ── Action panel ─────────────────────────────────────── */
+.kz-action-panel {
+    background-color: #ffffff;
+    border: 1px solid var(--kz-gray);
+    border-radius: 6px;
+    padding: 14px 12px;
+    min-width: 215px;
+    max-width: 215px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-self: flex-start;
+}
+
+/* ── Progress bar ─────────────────────────────────────── */
+.kz-progress-bar {
+    height: 14px !important;
+    background-color: var(--kz-gray);
+    border-radius: 3px;
+}
+
+.kz-progress-fill {
+    background-color: var(--kz-orange) !important;
+    transition: width 0.3s ease;
+}
+
+/* ── Status label ─────────────────────────────────────── */
+.status-label {
+    font-size: 0.80rem;
+    color: var(--kz-navy-light);
+    line-height: 1.4;
+    min-height: 36px;
+    word-break: break-word;
+}
+
+/* ── Log area ─────────────────────────────────────────── */
+#log {
+    background-color: #1a1a2e;
+    color: #a0d8ef;
+    font-size: 0.78rem;
+    border-radius: 4px;
+    padding: 10px 12px;
+    height: 150px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    margin: 0;
+    font-family: 'Consolas', 'Courier New', monospace;
+    border: 1px solid #333;
+}
+
+/* ── Section title ────────────────────────────────────── */
+.kz-section-title {
+    color: var(--kz-navy);
+    font-size: 0.90rem;
+    font-weight: 600;
+    margin-bottom: 0;
+}
+
+/* ── Toast container ──────────────────────────────────── */
+#kz-toast-container {
+    position: fixed;
+    top: 70px;
+    right: 20px;
+    z-index: 1080;
+    min-width: 280px;
+    max-width: 380px;
+}
+
+/* ── Modal header ─────────────────────────────────────── */
+.kz-modal-header {
+    background-color: var(--kz-navy);
+}
+
+/* ── Scan result table ────────────────────────────────── */
+#scan-result-tbody tr:hover {
+    background-color: var(--kz-navy-pale) !important;
+    cursor: pointer;
+}
+
+#scan-result-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+/* ── Responsive tweaks ────────────────────────────────── */
+@media (max-width: 992px) {
+    .kz-action-panel {
+        min-width: 180px;
+        max-width: 180px;
+    }
+}
