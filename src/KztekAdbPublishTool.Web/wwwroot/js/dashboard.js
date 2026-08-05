@@ -374,7 +374,8 @@
                 const file = inputApk.files[0];
                 if (!file) return;
                 const fd = new FormData();
-                fd.append('file', file);
+                // FIX-3.2 (Code Migrator review): backend đọc form.Files["apk"], không phải "file" → upload luôn 400.
+                fd.append('apk', file);
                 appendLog('Đang tải lên APK: ' + file.name + '...');
                 try {
                     const r = await fetch('/api/apk/upload', { method: 'POST', body: fd });

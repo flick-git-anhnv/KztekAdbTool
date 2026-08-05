@@ -173,7 +173,9 @@
                     const r = await fetch('/api/scan/start', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ ipRange: range, port: port })
+                        // FIX-3.2 (Code Migrator review): backend DTO là ScanStartRequest.RangeText,
+                        // không phải "ipRange" → validation luôn fail vì rangeText null.
+                        body: JSON.stringify({ rangeText: range, port: port })
                     });
                     if (!r.ok) {
                         const txt = await r.text();

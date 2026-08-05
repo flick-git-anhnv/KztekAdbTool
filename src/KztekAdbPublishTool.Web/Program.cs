@@ -25,7 +25,7 @@ builder.Services.AddSingleton<PollControlService>(); // [STEP-2.5] điều khi�
 
 // ── Phase 2 Backend — State + Coordinators (STEP-2.1–2.4) ────────────────
 builder.Services.AddSingleton<DeviceState>();
-// FIX-3.1d: PollingState không được inject ở đâu — chức năng do PollControlService đảm nhiệm
+// FIX-3.2 (Code Migrator): PollControlService đảm nhiệm điều khiển poll; PollingState dead code đã xóa hoàn toàn.
 builder.Services.AddSingleton<InstallCoordinator>();
 builder.Services.AddSingleton<ScanCoordinator>();
 
