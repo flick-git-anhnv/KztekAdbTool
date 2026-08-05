@@ -2,6 +2,7 @@ using KztekAdbPublishTool.Web.Configuration;
 using KztekAdbPublishTool.Web.Endpoints;
 using KztekAdbPublishTool.Web.Hubs;
 using KztekAdbPublishTool.Web.Services;
+using KztekAdbPublishTool.Web.State;
 using KztekAdbPublishTool.Web.Workers;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -21,6 +22,12 @@ builder.Services.AddSingleton<AdbService>();
 builder.Services.AddSingleton<DeviceRepository>();
 builder.Services.AddSingleton<ApkManifestReader>();
 builder.Services.AddSingleton<PollControlService>(); // [STEP-2.5] điều khiển poll + trigger thủ công
+
+// ── Phase 2 Backend — State + Coordinators (STEP-2.1–2.4) ────────────────
+builder.Services.AddSingleton<DeviceState>();
+builder.Services.AddSingleton<PollingState>();
+builder.Services.AddSingleton<InstallCoordinator>();
+builder.Services.AddSingleton<ScanCoordinator>();
 
 // ── SignalR ───────────────────────────────────────────────────────────────────
 builder.Services.AddSignalR();
@@ -48,6 +55,11 @@ app.MapHub<DeviceHub>("/hubs/device");
 // ── Endpoints [STEP-2.5] ──────────────────────────────────────────────────────
 app.MapDeviceEndpoints();
 app.MapHealthEndpoints();
+
+// ── Endpoints [STEP-2.1–2.4] ─────────────────────────────────────────────────
+app.MapInstallEndpoints();
+app.MapScanEndpoints();
+app.MapApkEndpoints();
 
 // ── Pages ─────────────────────────────────────────────────────────────────────
 app.MapRazorPages();
