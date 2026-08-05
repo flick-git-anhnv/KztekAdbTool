@@ -2,7 +2,7 @@
 id: PLAN-adb-publish-web-migrate
 title: Migrate KztekAdbPublishTool WinForms → ASP.NET Core Razor Pages (.NET 8) cho Docker Linux
 created: 2026-08-05
-updated: 2026-08-05 16:00
+updated: 2026-08-05 16:31
 status: approved
 owner: code-migrator (planning) → senior-developer + junior-developer (implementation)
 related:
@@ -55,7 +55,7 @@ related:
 | 2.7 | Network scan modal `#networkScanModal` + JS gọi API scan/cancel/add, progress bar realtime | Frontend | Junior Dev | B | 1.3 | 3h | ✅ | 2026-08-05 | [STEP-2.7](steps/STEP-2.7-scan-modal.md) |
 | 2.8 | Client-side JS: SignalR client (auto-reconnect + fallback polling), toggle select-all theo filter, filter IP/version, checkbox row toggle, log append, toast/modal cho MessageBox tương đương | Frontend | Junior Dev | B | 1.3 | 4h | ✅ | 2026-08-05 | [STEP-2.8](steps/STEP-2.8-client-js.md) |
 | **Phase 3 — Integration & Verify** | | | | | | | | | |
-| 3.1 | Ghép, chạy local (`dotnet run`), test 12 luồng chính (poll, install, scan, connect, remove, filter, select-all, upload APK, auto-detect package, launch app sau install, cancel scan, toggle auto-detect) | Integration | Senior Dev | C | 2.1–2.8 | 4h | ⬜ | — | [STEP-3.1](steps/STEP-3.1-integration.md) |
+| 3.1 | Ghép, chạy local (`dotnet run`), test 12 luồng chính (poll, install, scan, connect, remove, filter, select-all, upload APK, auto-detect package, launch app sau install, cancel scan, toggle auto-detect) | Integration | Senior Dev | C | 2.1–2.8 | 4h | ✅ | 2026-08-05 16:31 | [STEP-3.1](steps/STEP-3.1-integration.md) |
 | 3.2 | Code Migrator review artifact (Opus): correctness, behavior parity vs WinForms, security, style — request-changes nếu lệch | Review | Code Migrator | C | 3.1 | 2h | ⬜ | — | [STEP-3.2](steps/STEP-3.2-code-review.md) |
 | 3.3 | QA Engineer smoke test 12 luồng + verify behavior parity đối chiếu bản WinForms | QA | QA Engineer | D | 3.2 | 4h | ⬜ | — | [STEP-3.3](steps/STEP-3.3-qa-smoke.md) |
 | 3.4 | Ghi chú bàn giao DevOps: yêu cầu Dockerfile (mcr .NET 8 SDK+aspnet, apt install android-tools-adb, volume /app/data /app/uploads, network host), docker-compose | Handoff | Code Migrator | D | 3.3 | 1h | ⬜ | — | [STEP-3.4](steps/STEP-3.4-devops-handoff.md) |
@@ -103,3 +103,4 @@ _(Không có tại thời điểm lập plan. Cập nhật khi phát sinh.)_
 | 2026-08-05 | User | Duyệt plan — xác nhận cả 5 assumption (Razor Pages, network host trên Linux server thật, Bootstrap 5, single-tenant, SignalR). Bắt đầu Phase 1. |
 | 2026-08-05 16:00 | Senior Developer | Phase 1 hoàn thành (STEP 1.1+1.2+1.3 → ✅). Build 0 lỗi, 5/5 test pass. Commit: 0689a7e. |
 | 2026-08-05 | Senior/Junior Dev (3 agent song song) | Phase 2 hoàn thành (STEP 2.1-2.8 → ✅). Build tổng hợp 0 lỗi. Cần bước 3.1 đối chiếu 1 điểm contract: body `POST /api/install` (frontend giả định `{serials:[], selectedOnly:false}` = cài tất cả Online — backend cần xác nhận/implement đúng quy ước). |
+| 2026-08-05 16:31 | Senior Developer | STEP-3.1 → ✅. Fix 4 contract mismatch: SignalR args (ScanCoordinator 3 events + InstallCoordinator 2 events), fallback poll parsing, PollingState dead DI. dotnet build 0 lỗi, 19/19 test pass, 8 endpoint curl OK. Commit: 058aea5. |
