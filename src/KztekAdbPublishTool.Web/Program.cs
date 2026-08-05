@@ -1,4 +1,5 @@
 using KztekAdbPublishTool.Web.Configuration;
+using KztekAdbPublishTool.Web.Endpoints;
 using KztekAdbPublishTool.Web.Hubs;
 using KztekAdbPublishTool.Web.Services;
 using KztekAdbPublishTool.Web.Workers;
@@ -19,6 +20,7 @@ builder.WebHost.ConfigureKestrel(options =>
 builder.Services.AddSingleton<AdbService>();
 builder.Services.AddSingleton<DeviceRepository>();
 builder.Services.AddSingleton<ApkManifestReader>();
+builder.Services.AddSingleton<PollControlService>(); // [STEP-2.5] điều khiển poll + trigger thủ công
 
 // ── SignalR ───────────────────────────────────────────────────────────────────
 builder.Services.AddSignalR();
@@ -42,6 +44,10 @@ app.UseRouting();
 
 // ── Hubs ──────────────────────────────────────────────────────────────────────
 app.MapHub<DeviceHub>("/hubs/device");
+
+// ── Endpoints [STEP-2.5] ──────────────────────────────────────────────────────
+app.MapDeviceEndpoints();
+app.MapHealthEndpoints();
 
 // ── Pages ─────────────────────────────────────────────────────────────────────
 app.MapRazorPages();
