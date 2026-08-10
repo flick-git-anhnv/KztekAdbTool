@@ -32,7 +32,7 @@ WORKDIR /app
 # Cài ADB từ Debian package repo
 # adb được symlink về /opt/platform-tools/adb để khớp appsettings.json
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends android-tools-adb && \
+    apt-get install -y --no-install-recommends android-tools-adb curl && \
     mkdir -p /opt/platform-tools && \
     ln -sf /usr/bin/adb /opt/platform-tools/adb && \
     rm -rf /var/lib/apt/lists/*
@@ -51,5 +51,8 @@ ENV ASPNETCORE_URLS=http://0.0.0.0:8080
 ENV ASPNETCORE_ENVIRONMENT=Production
 
 EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+    CMD curl -fsS http://localhost:8080/health || exit 1
 
 ENTRYPOINT ["dotnet", "KztekAdbPublishTool.Web.dll"]

@@ -11,3 +11,7 @@ temp/
 # User-specific files
 *.user
 *.suo
+
+# Dev-only runtime data (KztekAdbPublishTool.Web local testing)
+src/KztekAdbPublishTool.Web/*.db
+src/KztekAdbPublishTool.Web/uploads-dev/
