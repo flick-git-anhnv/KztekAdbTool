@@ -29,4 +29,12 @@ public sealed class DeviceState
 
     public bool TryGet(string serial, out DeviceRecord? device) =>
         _map.TryGetValue(serial, out device);
+
+    /// <summary>
+    /// Xóa thiết bị khỏi in-memory snapshot.
+    /// Gọi song song với DeviceRepository.Remove() để đảm bảo 2 nguồn state đồng bộ.
+    /// Nếu thiết bị vẫn live (adb daemon vẫn thấy) → poll kế tiếp sẽ tự phát hiện lại
+    /// (hành vi đúng theo thiết kế, parity với WinForms MainForm.cs:572-577).
+    /// </summary>
+    public bool Remove(string serial) => _map.TryRemove(serial, out _);
 }

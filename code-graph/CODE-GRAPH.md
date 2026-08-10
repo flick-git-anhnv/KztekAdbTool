@@ -1,6 +1,6 @@
 ---
 project: KztekAdbPublishTool (multi-project solution)
-last_updated: 2026-08-05
+last_updated: 2026-08-10
 updated_by: Senior Developer
 ---
 
@@ -11,6 +11,7 @@ updated_by: Senior Developer
 | Ngày | Người | Thay đổi |
 |---|---|---|
 | 2026-08-05 | Senior Developer | Tạo mới — Phase 1 Foundation (STEP 1.1–1.3) |
+| 2026-08-10 | Senior Developer | Cập nhật đầy đủ sau Phase 2+3 hoàn tất; thêm `DeviceState.Remove()` (bug fix R9); bổ sung toàn bộ module Services/Endpoints/State còn thiếu |
 
 ---
 
@@ -31,28 +32,43 @@ updated_by: Senior Developer
 ```
 src/KztekAdbPublishTool.Web/
 ├── Configuration/
-│   └── AdbSettings.cs          ← POCO config (AdbPath, PollIntervalMs, DbPath, UploadsPath, MaxUploadBytes)
+│   └── AdbSettings.cs              ← POCO config (AdbPath, PollIntervalMs, DbPath, UploadsPath, MaxUploadBytes)
+├── Endpoints/
+│   ├── ApkEndpoints.cs             ← POST /api/apk/upload, DELETE /api/apk
+│   ├── DeviceEndpoints.cs          ← POST /api/devices/{connect,connect-batch,remove,poll}, GET /api/devices, POST /api/settings/package, /api/polling/toggle
+│   ├── HealthEndpoints.cs          ← GET /health
+│   ├── InstallEndpoints.cs         ← POST /api/install
+│   └── ScanEndpoints.cs            ← POST /api/scan/start, /api/scan/cancel
 ├── Hubs/
-│   └── DeviceHub.cs            ← SignalR Hub, endpoint /hubs/device
+│   └── DeviceHub.cs                ← SignalR Hub, endpoint /hubs/device
 ├── Models/
-│   └── DeviceRecord.cs         ← POCO entity (9 property), dùng làm DB row + SignalR DTO
+│   └── DeviceRecord.cs             ← POCO entity (9 property), dùng làm DB row + SignalR DTO
 ├── Pages/
-│   ├── _ViewImports.cshtml
-│   ├── _ViewStart.cshtml
-│   ├── Index.cshtml             ← Dashboard (Phase 2 sẽ hoàn thiện)
-│   ├── Index.cshtml.cs          ← IndexModel : PageModel
+│   ├── Index.cshtml                ← Dashboard: toolbar 3 hàng, grid 9 cột, action panel, log area
+│   ├── Index.cshtml.cs             ← IndexModel : PageModel
 │   └── Shared/
-│       └── _Layout.cshtml       ← Bootstrap 5, navbar KZTEK brand (Navy/Cam)
+│       └── _Layout.cshtml          ← Bootstrap 5 local, navbar KZTEK brand (Navy/Cam)
 ├── Services/
-│   ├── AdbService.cs            ← Singleton; wrap adb binary; constructor: IOptions<AdbSettings>
-│   ├── ApkManifestReader.cs     ← Singleton; parse AXML từ .apk; stateless
-│   └── DeviceRepository.cs      ← Singleton; SQLite CRUD; constructor: IOptions<AdbSettings>
+│   ├── AdbService.cs               ← Singleton; wrap adb binary; GetDevices/Connect/Install/LaunchApp/GetVersion
+│   ├── ApkManifestReader.cs        ← Singleton; parse AXML từ .apk; stateless
+│   ├── DeviceRepository.cs         ← Singleton; SQLite CRUD (Upsert/Remove/GetAll/GetSetting/SetSetting/UpdateInstallResult)
+│   ├── InstallCoordinator.cs       ← Singleton; queue install per-device (SemaphoreSlim(1)), global (SemaphoreSlim(4))
+│   ├── PollControlService.cs       ← Singleton; PollingEnabled flag + TriggerAsync (manual poll trigger)
+│   ├── ScanCoordinator.cs          ← Singleton; TCP probe scan (SemaphoreSlim(24), max 512 IP, timeout 1200ms)
+│   └── ScanRangeParser.cs          ← Static; parse IP range string → List<string> IPs
+├── State/
+│   └── DeviceState.cs              ← Singleton; ConcurrentDictionary in-memory snapshot; AddOrUpdate/TryGet/GetAll/GetSerials/Remove
 ├── Workers/
-│   └── DevicePollWorker.cs      ← BackgroundService; poll 3s heartbeat (Phase 2: logic thực)
+│   └── DevicePollWorker.cs         ← BackgroundService; poll 3s → Upsert → RefreshVersion → push SignalR DevicesUpdated
 ├── wwwroot/
-│   └── js/
-│       └── signalr-client.js    ← SignalR client (auto-reconnect, expose window.kzHubConnection)
-├── Program.cs                   ← Entry point, DI registration, Kestrel 500MB limit
+│   ├── js/
+│   │   ├── dashboard.js            ← Main UI logic: SignalR handlers, device grid, install/remove/connect buttons
+│   │   ├── scan-modal.js           ← Network scan modal JS
+│   │   └── signalr-client.js       ← SignalR client (auto-reconnect, expose window.kzHubConnection)
+│   └── lib/
+│       ├── bootstrap.bundle.min.js ← Bootstrap 5 local (tránh CDN fail trong Docker LAN)
+│       └── signalr.min.js          ← SignalR client lib local
+├── Program.cs                      ← Entry point, DI registration, Kestrel+FormOptions 500MB limit
 ├── appsettings.json
 └── appsettings.Development.json
 ```
@@ -61,44 +77,59 @@ src/KztekAdbPublishTool.Web/
 
 | Module | Phụ thuộc vào | Được gọi bởi (Callers) | Confidence | Last verified |
 |---|---|---|---|---|
-| `Program.cs` | AdbSettings, AdbService, DeviceRepository, ApkManifestReader, DevicePollWorker, DeviceHub | — (entry point) | CONFIRMED | 2026-08-05 |
-| `Configuration/AdbSettings` | — | Program.cs, AdbService, DeviceRepository, DevicePollWorker | CONFIRMED | 2026-08-05 |
-| `Services/AdbService` | IOptions\<AdbSettings\>, System.Diagnostics.Process | DevicePollWorker (Phase 2), InstallCoordinator (Phase 2) | CONFIRMED | 2026-08-05 |
-| `Services/DeviceRepository` | IOptions\<AdbSettings\>, Microsoft.Data.Sqlite, Models/DeviceRecord | DevicePollWorker (Phase 2), API endpoints (Phase 2) | CONFIRMED | 2026-08-05 |
-| `Services/ApkManifestReader` | System.IO.Compression | APK upload endpoint (Phase 2) | CONFIRMED | 2026-08-05 |
-| `Hubs/DeviceHub` | Microsoft.AspNetCore.SignalR.Hub | Program.cs (MapHub), Workers (Phase 2) | CONFIRMED | 2026-08-05 |
-| `Workers/DevicePollWorker` | IOptions\<AdbSettings\>, ILogger | Program.cs (AddHostedService) | CONFIRMED | 2026-08-05 |
-| `Models/DeviceRecord` | — | DeviceRepository, SignalR push (Phase 2), API JSON response (Phase 2) | CONFIRMED | 2026-08-05 |
-| `Pages/Index` | IndexModel : PageModel | Router (/) | CONFIRMED | 2026-08-05 |
-| `wwwroot/js/signalr-client.js` | signalr.min.js (CDN) | _Layout.cshtml | CONFIRMED | 2026-08-05 |
+| `Program.cs` | AdbSettings, AdbService, DeviceRepository, ApkManifestReader, DevicePollWorker, DeviceHub, DeviceState, InstallCoordinator, ScanCoordinator, PollControlService | — (entry point) | CONFIRMED | 2026-08-10 |
+| `Configuration/AdbSettings` | — | Program.cs, AdbService, DeviceRepository, DevicePollWorker | CONFIRMED | 2026-08-10 |
+| `Services/AdbService` | IOptions\<AdbSettings\>, System.Diagnostics.Process | DevicePollWorker, InstallCoordinator | CONFIRMED | 2026-08-10 |
+| `Services/DeviceRepository` | IOptions\<AdbSettings\>, Microsoft.Data.Sqlite, Models/DeviceRecord | DevicePollWorker, DeviceEndpoints, InstallEndpoints, ApkEndpoints, InstallCoordinator | CONFIRMED | 2026-08-10 |
+| `Services/ApkManifestReader` | System.IO.Compression | ApkEndpoints | CONFIRMED | 2026-08-10 |
+| `Services/InstallCoordinator` | AdbService, DeviceRepository, DeviceState, IHubContext\<DeviceHub\> | InstallEndpoints | CONFIRMED | 2026-08-10 |
+| `Services/PollControlService` | — | DevicePollWorker, DeviceEndpoints | CONFIRMED | 2026-08-10 |
+| `Services/ScanCoordinator` | IHubContext\<DeviceHub\>, ScanRangeParser | ScanEndpoints | CONFIRMED | 2026-08-10 |
+| `Services/ScanRangeParser` | — | ScanCoordinator | CONFIRMED | 2026-08-10 |
+| `State/DeviceState` | System.Collections.Concurrent, Models/DeviceRecord | DevicePollWorker, DeviceEndpoints, InstallEndpoints, InstallCoordinator | CONFIRMED | 2026-08-10 |
+| `Hubs/DeviceHub` | Microsoft.AspNetCore.SignalR.Hub | Program.cs (MapHub), DevicePollWorker, InstallCoordinator, ScanCoordinator | CONFIRMED | 2026-08-10 |
+| `Workers/DevicePollWorker` | IOptions\<AdbSettings\>, AdbService, DeviceRepository, DeviceState, PollControlService, IHubContext\<DeviceHub\> | Program.cs (AddHostedService) | CONFIRMED | 2026-08-10 |
+| `Models/DeviceRecord` | — | DeviceRepository, DeviceState, DevicePollWorker, InstallCoordinator, API JSON response | CONFIRMED | 2026-08-10 |
+| `Endpoints/DeviceEndpoints` | DeviceRepository, DeviceState, AdbService, PollControlService | Program.cs (MapDeviceEndpoints) | CONFIRMED | 2026-08-10 |
+| `Endpoints/InstallEndpoints` | DeviceState, DeviceRepository, InstallCoordinator | Program.cs (MapInstallEndpoints) | CONFIRMED | 2026-08-10 |
+| `Endpoints/ScanEndpoints` | ScanCoordinator | Program.cs (MapScanEndpoints) | CONFIRMED | 2026-08-10 |
+| `Endpoints/ApkEndpoints` | IOptions\<AdbSettings\>, ApkManifestReader, DeviceRepository | Program.cs (MapApkEndpoints) | CONFIRMED | 2026-08-10 |
+| `Endpoints/HealthEndpoints` | — | Program.cs (MapHealthEndpoints) | CONFIRMED | 2026-08-10 |
+| `Pages/Index` | IndexModel : PageModel | Router (/) | CONFIRMED | 2026-08-10 |
+| `wwwroot/js/signalr-client.js` | signalr.min.js (local lib) | _Layout.cshtml | CONFIRMED | 2026-08-10 |
+| `wwwroot/js/dashboard.js` | signalr-client.js, bootstrap.bundle.min.js (local) | _Layout.cshtml | CONFIRMED | 2026-08-10 |
+| `wwwroot/js/scan-modal.js` | signalr-client.js | _Layout.cshtml | CONFIRMED | 2026-08-10 |
 
-### 2.3 API Endpoints (Phase 1 khung — Phase 2 sẽ bổ sung)
+### 2.3 API Endpoints
 
 | Method | Path | Handler | Status |
 |---|---|---|---|
-| GET | `/` | Pages/Index | ✅ Phase 1 |
-| WS/GET | `/hubs/device/negotiate` | DeviceHub (SignalR) | ✅ Phase 1 |
-| POST | `/api/install` | InstallCoordinator | ⬜ Phase 2 (STEP-2.2) |
-| POST | `/api/scan/start` | ScanCoordinator | ⬜ Phase 2 (STEP-2.3) |
-| POST | `/api/scan/cancel` | ScanCoordinator | ⬜ Phase 2 (STEP-2.3) |
-| POST | `/api/apk/upload` | APK handler | ⬜ Phase 2 (STEP-2.4) |
-| DELETE | `/api/apk` | APK handler | ⬜ Phase 2 (STEP-2.4) |
-| POST | `/api/devices/connect` | Device endpoint | ⬜ Phase 2 (STEP-2.5) |
-| POST | `/api/devices/connect-batch` | Device endpoint | ⬜ Phase 2 (STEP-2.5) |
-| POST | `/api/devices/remove` | Device endpoint | ⬜ Phase 2 (STEP-2.5) |
-| GET | `/api/devices` | Device endpoint | ⬜ Phase 2 (STEP-2.5) |
-| POST | `/api/settings/package` | Settings endpoint | ⬜ Phase 2 (STEP-2.5) |
-| POST | `/api/polling/toggle` | Polling endpoint | ⬜ Phase 2 (STEP-2.5) |
+| GET | `/` | Pages/Index | ✅ |
+| GET | `/health` | HealthEndpoints | ✅ |
+| WS/GET | `/hubs/device/negotiate` | DeviceHub (SignalR) | ✅ |
+| POST | `/api/install` | InstallEndpoints → InstallCoordinator | ✅ |
+| POST | `/api/scan/start` | ScanEndpoints → ScanCoordinator | ✅ |
+| POST | `/api/scan/cancel` | ScanEndpoints → ScanCoordinator | ✅ |
+| POST | `/api/apk/upload` | ApkEndpoints | ✅ |
+| DELETE | `/api/apk` | ApkEndpoints | ✅ |
+| POST | `/api/devices/connect` | DeviceEndpoints → AdbService + PollControlService | ✅ |
+| POST | `/api/devices/connect-batch` | DeviceEndpoints → AdbService + PollControlService | ✅ |
+| POST | `/api/devices/remove` | DeviceEndpoints → **DeviceState** + DeviceRepository | ✅ Bug R9 fixed 2026-08-10 |
+| GET | `/api/devices` | DeviceEndpoints → DeviceRepository | ✅ |
+| POST | `/api/settings/package` | DeviceEndpoints → DeviceRepository | ✅ |
+| POST | `/api/polling/toggle` | DeviceEndpoints → PollControlService + DeviceRepository | ✅ |
+| POST | `/api/devices/poll` | DeviceEndpoints → PollControlService.TriggerAsync | ✅ |
 
 ### 2.4 SignalR Events (server → client)
 
 | Event | Payload | Triggered by | Status |
 |---|---|---|---|
-| `DevicesUpdated` | `List<DeviceRecord>` | DevicePollWorker | ⬜ Phase 2 (STEP-2.1) |
-| `InstallProgress` | `serial, percent, message` | InstallCoordinator | ⬜ Phase 2 (STEP-2.2) |
-| `DeviceInstalled` | `serial, success, version` | InstallCoordinator | ⬜ Phase 2 (STEP-2.2) |
-| `ScanProgress` | `found, scanned, total` | ScanCoordinator | ⬜ Phase 2 (STEP-2.3) |
-| `ScanFound` | `ipPort` | ScanCoordinator | ⬜ Phase 2 (STEP-2.3) |
+| `DevicesUpdated` | `List<DeviceRecord>` | DevicePollWorker (mỗi 3s) | ✅ |
+| `InstallProgress` | `string serial, int percent, string message` | InstallCoordinator | ✅ |
+| `DeviceInstalled` | `string serial, bool success, string version` | InstallCoordinator | ✅ |
+| `ScanProgress` | `int found, int scanned, int total` | ScanCoordinator | ✅ |
+| `ScanFound` | `string ipPort` | ScanCoordinator | ✅ |
+| `ScanCompleted` | `int total, int found` | ScanCoordinator | ✅ |
 
 ### 2.5 Configuration (appsettings.json — section "Adb")
 
@@ -123,6 +154,8 @@ src/KztekAdbPublishTool.Web/
 
 | Ngày | File | Loại thay đổi |
 |---|---|---|
-| 2026-08-05 | `src/KztekAdbPublishTool.Web/**` | Tạo mới toàn bộ project (Phase 1 — STEP 1.1–1.3) |
+| 2026-08-05 | `src/KztekAdbPublishTool.Web/**` | Tạo mới toàn bộ project (Phase 1–3) |
 | 2026-08-05 | `tests/KztekAdbPublishTool.Web.Tests/**` | Tạo mới test project + 5 test cases DeviceRepository |
 | 2026-08-05 | `KztekAdbPublishTool.sln` | Thêm 2 project mới vào solution |
+| 2026-08-10 | `State/DeviceState.cs` | Thêm method `Remove(string serial)` — fix bug R9: thiết bị không biến mất sau khi xóa |
+| 2026-08-10 | `Endpoints/DeviceEndpoints.cs` | Handler `/api/devices/remove` nhận thêm `DeviceState` qua DI, gọi `deviceState.Remove()` trước `repo.Remove()` — parity WinForms MainForm.cs:572-577 |

@@ -2,7 +2,7 @@
 id: PLAN-adb-publish-web-migrate
 title: Migrate KztekAdbPublishTool WinForms → ASP.NET Core Razor Pages (.NET 8) cho Docker Linux
 created: 2026-08-05
-updated: 2026-08-05 16:49
+updated: 2026-08-10
 status: code-phase-completed
 owner: code-migrator (planning) → senior-developer + junior-developer (implementation)
 related:
@@ -89,6 +89,7 @@ related:
 | R6 | Bootstrap/Bootstrap Icons/SignalR client load qua CDN → crash "X is not defined" khi server/container không có egress internet (chắc chắn xảy ra trong Docker LAN nội bộ) | Đóng gói static asset local trong `wwwroot/lib/`, bỏ phụ thuộc CDN khi chạy production |
 | R7 | `launchSettings.json` bind `localhost` — chỉ máy chạy server truy cập được | Bind `0.0.0.0` qua `ASPNETCORE_URLS`, verify bằng máy khác trong LAN |
 | R8 | `FormOptions.MultipartBodyLengthLimit` mặc định 128MB độc lập với Kestrel `MaxRequestBodySize` — upload APK lớn vẫn fail dù đã set Kestrel 500MB | Cấu hình thêm `services.Configure<FormOptions>(o => o.MultipartBodyLengthLimit = 500_000_000)` |
+| R9 | `DeviceState` (in-memory) và `DeviceRepository` (SQLite) là 2 nguồn state độc lập — handler `POST /api/devices/remove` ban đầu chỉ gọi `repo.Remove()`, không gọi `deviceState.Remove()` → `DevicePollWorker` push snapshot cũ mỗi 3s, thiết bị không bao giờ biến mất khỏi UI sau khi xóa | **ĐÃ FIX 2026-08-10**: thêm `DeviceState.Remove()` + sửa handler remove gọi song song cả 2 nguồn (parity WinForms MainForm.cs:572-577). Build Release 0 lỗi. |
 
 ---
 
@@ -114,3 +115,4 @@ _(Không có tại thời điểm lập plan. Cập nhật khi phát sinh.)_
 | 2026-08-05 16:31 | Senior Developer | STEP-3.1 → ✅. Fix 4 contract mismatch: SignalR args (ScanCoordinator 3 events + InstallCoordinator 2 events), fallback poll parsing, PollingState dead DI. dotnet build 0 lỗi, 19/19 test pass, 8 endpoint curl OK. Commit: 058aea5. |
 | 2026-08-05 17:05 | Code Migrator | STEP-3.2 → ✅ **PASS (sau fix)**. Phát hiện 3 Critical (2 JS↔C# contract mismatch mà curl-only test miss: `file`↔`apk` upload, `ipRange`↔`rangeText` scan; 1 dead code `PollingState.cs`) → tự fix. Build Release 0 lỗi. 2 minor security ghi nhận không block. Commit: 833972f. |
 | 2026-08-05 16:49 | QA Engineer | STEP-3.3 → ✅ **SIGN-OFF**. Smoke test 22 TC: 17 Pass, 5 Skip (thiếu device Android). C1+C2 fix verified bằng UI-equivalent test (curl với đúng field name) + regression confirmed. SignalR negotiate OK. 0 P0/P1 mới. Behavior parity WinForms xác nhận qua code analysis. TC file: `docs/test-cases/TC-adb-publish-web-migrate.md`. |
+| 2026-08-10 | Senior Developer | **Bug R9 fix** (phát hiện qua user test thực tế post-QA): `DeviceState` thiếu `Remove()` — handler `/api/devices/remove` chỉ xóa SQLite, không xóa ConcurrentDictionary in-memory → thiết bị không biến mất trên UI sau khi xóa (DevicePollWorker push snapshot cũ mỗi 3s). Fix: (1) thêm `public bool Remove(string serial)` vào `State/DeviceState.cs`; (2) sửa handler `DeviceEndpoints.cs` nhận thêm `DeviceState` qua DI, gọi `deviceState.Remove()` + `repo.Remove()` song song. Audit toàn bộ behavior parity: confirm dialog JS đã có từ trước (parity WinForms). Re-detect behavior khi thiết bị vẫn live là đúng thiết kế (WinForms MainForm.cs:358-372). Build Release 0 lỗi. CODE-GRAPH cập nhật đầy đủ Phase 2+3. |

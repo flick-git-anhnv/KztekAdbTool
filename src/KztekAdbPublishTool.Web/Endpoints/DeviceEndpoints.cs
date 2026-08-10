@@ -1,4 +1,5 @@
 using KztekAdbPublishTool.Web.Services;
+using KztekAdbPublishTool.Web.State;
 
 namespace KztekAdbPublishTool.Web.Endpoints;
 
@@ -69,14 +70,21 @@ public static class DeviceEndpoints
         });
 
         // ── POST /api/devices/remove ─────────────────────────────────────────────
-        app.MapPost("/api/devices/remove", (RemoveRequest req, DeviceRepository repo) =>
+        // FIX: phải xóa cả DeviceState (in-memory) lẫn SQLite.
+        // Thiếu deviceState.Remove() → DevicePollWorker push snapshot cũ mãi không biến mất.
+        // Parity: MainForm.cs:572-577 gọi _devices.Remove() + _repo.Remove() song song.
+        app.MapPost("/api/devices/remove", (RemoveRequest req, DeviceRepository repo, DeviceState deviceState) =>
         {
             if (req.Serials == null || req.Serials.Length == 0)
                 return Results.BadRequest(new { ok = false, error = "serials không được để trống" });
 
             foreach (var serial in req.Serials)
                 if (!string.IsNullOrWhiteSpace(serial))
-                    repo.Remove(serial.Trim());
+                {
+                    var s = serial.Trim();
+                    deviceState.Remove(s); // xóa khỏi in-memory snapshot TRƯỚC
+                    repo.Remove(s);        // xóa khỏi SQLite
+                }
 
             return Results.Ok(new { ok = true });
         });
