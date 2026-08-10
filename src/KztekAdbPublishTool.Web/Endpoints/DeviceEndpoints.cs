@@ -73,7 +73,13 @@ public static class DeviceEndpoints
         // FIX: phải xóa cả DeviceState (in-memory) lẫn SQLite.
         // Thiếu deviceState.Remove() → DevicePollWorker push snapshot cũ mãi không biến mất.
         // Parity: MainForm.cs:572-577 gọi _devices.Remove() + _repo.Remove() song song.
-        app.MapPost("/api/devices/remove", (RemoveRequest req, DeviceRepository repo, DeviceState deviceState) =>
+        //
+        // FIX-2: nếu thiết bị WiFi (serial dạng ip:port) vẫn đang "device" thật ở tầng adb daemon,
+        // DevicePollWorker sẽ phát hiện lại nó như thiết bị mới ngay vòng poll kế tiếp (~3s) dù đã
+        // xóa khỏi DeviceState/DB — cảm giác như "xóa không có tác dụng". Gọi `adb disconnect` để
+        // cắt kết nối thật, chỉ khi đó "Xóa" mới thực sự dừng theo dõi thiết bị cho tới khi user
+        // kết nối lại thủ công. Không áp dụng cho serial USB (không chứa ':') — adb không hỗ trợ.
+        app.MapPost("/api/devices/remove", async (RemoveRequest req, DeviceRepository repo, DeviceState deviceState, AdbService adb, CancellationToken ct) =>
         {
             if (req.Serials == null || req.Serials.Length == 0)
                 return Results.BadRequest(new { ok = false, error = "serials không được để trống" });
@@ -84,6 +90,12 @@ public static class DeviceEndpoints
                     var s = serial.Trim();
                     deviceState.Remove(s); // xóa khỏi in-memory snapshot TRƯỚC
                     repo.Remove(s);        // xóa khỏi SQLite
+
+                    if (s.Contains(':'))
+                    {
+                        try { await adb.DisconnectAsync(s, ct: ct); }
+                        catch { /* best-effort — không chặn việc xóa nếu disconnect lỗi */ }
+                    }
                 }
 
             return Results.Ok(new { ok = true });

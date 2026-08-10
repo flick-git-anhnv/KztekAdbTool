@@ -57,13 +57,23 @@ public sealed class DevicePollWorker : BackgroundService
     {
         _logger.LogInformation("DevicePollWorker started. PollInterval={Ms}ms", _pollIntervalMs);
 
+        // Vòng đầu tiên: luôn poll ngay khi start, không phụ thuộc PollingEnabled.
+        var manualTrigger = true;
+
         while (!stoppingToken.IsCancellationRequested)
         {
-            if (_pollControl.PollingEnabled)
+            // FIX: toggle "Tự động phát hiện thiết bị" (PollingEnabled) chỉ được phép chặn
+            // vòng poll TỰ ĐỘNG theo interval — KHÔNG được chặn trigger thủ công (Connect,
+            // Connect-batch, nút "Quét lại"). Parity với WinForms: OnConnectAsync() gọi
+            // PollDevicesAsync(force:true) bỏ qua hoàn toàn trạng thái _chkAutoDetect —
+            // toggle đó chỉ Start/Stop _pollTimer, không chặn poll gọi trực tiếp từ code.
+            // Bug cũ: gate PollingEnabled áp dụng cho MỌI lần poll (cả trigger thủ công) →
+            // khi toggle tắt, bấm "Kết nối" thành công nhưng danh sách vẫn trống mãi.
+            if (manualTrigger || _pollControl.PollingEnabled)
                 await PollAsync(stoppingToken);
 
             // Chờ interval HOẶC trigger thủ công — whichever comes first
-            await WaitIntervalOrTriggerAsync(stoppingToken);
+            manualTrigger = await WaitIntervalOrTriggerAsync(stoppingToken);
         }
 
         _logger.LogInformation("DevicePollWorker stopped.");
@@ -71,9 +81,10 @@ public sealed class DevicePollWorker : BackgroundService
 
     /// <summary>
     /// Race giữa Task.Delay(pollIntervalMs) và PollControlService.WaitTriggerAsync.
-    /// Trigger thủ công (POST /api/devices/poll) thắng → poll ngay, không đợi hết interval.
+    /// Trigger thủ công (POST /api/devices/poll, Connect, Connect-batch) thắng → poll ngay.
+    /// Trả về true nếu thoát vì có trigger thủ công (không phải vì hết interval).
     /// </summary>
-    private async Task WaitIntervalOrTriggerAsync(CancellationToken stoppingToken)
+    private async Task<bool> WaitIntervalOrTriggerAsync(CancellationToken stoppingToken)
     {
         using var intervalCts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
         intervalCts.CancelAfter(_pollIntervalMs);
@@ -82,13 +93,14 @@ public sealed class DevicePollWorker : BackgroundService
         {
             // WaitTriggerAsync blocking — cancel sau pollIntervalMs hoặc khi app shutdown
             await _pollControl.WaitTriggerAsync(intervalCts.Token);
-            // Thoát sớm vì có trigger thủ công → poll ngay (tiếp vòng lặp)
+            return true; // thoát sớm vì có trigger thủ công
         }
         catch (OperationCanceledException)
         {
             // OperationCanceledException có 2 nguyên nhân:
-            //   (a) intervalCts timeout (pollIntervalMs trôi qua) → bình thường, tiếp tục poll
-            //   (b) stoppingToken được cancel (app shutdown) → vòng lặp ngoài sẽ break
+            //   (a) intervalCts timeout (pollIntervalMs trôi qua) → bình thường, không phải trigger
+            //   (b) stoppingToken được cancel (app shutdown) → vòng lặp ngoài sẽ break, giá trị trả về không quan trọng
+            return false;
         }
     }
 

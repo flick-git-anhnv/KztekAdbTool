@@ -480,13 +480,25 @@
                 }
                 const ok = confirm(
                     'Xóa ' + serials.length + ' thiết bị đã chọn khỏi danh sách quản lý?\n' +
-                    '(Thiết bị Online nếu còn kết nối adb sẽ tự xuất hiện lại ở lần quét kế tiếp.)'
+                    '(Sẽ ngắt kết nối adb luôn — muốn dùng lại phải Kết nối hoặc Quét dải mạng lại.)'
                 );
                 if (!ok) return;
                 try {
                     const r = await apiPost('/api/devices/remove', { serials: serials });
                     if (r.ok) {
                         serials.forEach(function (s) { checkedSerials.delete(s); });
+                        // FIX: xóa row khỏi DOM ngay, không chờ SignalR/poll kế tiếp —
+                        // parity với WinForms OnRemoveSelected() gọi RenderGrid() ngay sau khi xóa
+                        // (MainForm.cs:579). Trước fix: phải F5 hoặc chờ tick poll mới thấy mất.
+                        const tb = $id('device-tbody');
+                        if (tb) {
+                            serials.forEach(function (s) {
+                                const row = tb.querySelector('tr[data-serial="' + s.replace(/"/g, '\\"') + '"]');
+                                if (row) row.remove();
+                            });
+                            const badge = $id('device-count-badge');
+                            if (badge) badge.textContent = tb.querySelectorAll('tr').length + ' thiết bị';
+                        }
                         appendLog('Đã xóa ' + serials.length + ' thiết bị khỏi danh sách quản lý.');
                         showToast('Đã xóa ' + serials.length + ' thiết bị', 'success');
                     } else {

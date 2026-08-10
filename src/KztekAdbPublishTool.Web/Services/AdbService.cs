@@ -133,6 +133,14 @@ public sealed class AdbService
     public Task<AdbCommandResult> ConnectAsync(string ipPort, int timeoutMs = 10000, CancellationToken ct = default)
         => RunAsync($"connect {ipPort}", timeoutMs: timeoutMs, ct: ct);
 
+    /// <summary>
+    /// Cắt kết nối ADB WiFi. Gọi khi user xóa thiết bị — nếu không, thiết bị vẫn "device" ở
+    /// tầng adb daemon và bị DevicePollWorker phát hiện lại như thiết bị mới trong vòng poll kế tiếp.
+    /// Chỉ áp dụng cho serial dạng "ip:port" (kết nối WiFi); serial USB không hỗ trợ "adb disconnect".
+    /// </summary>
+    public Task<AdbCommandResult> DisconnectAsync(string serial, int timeoutMs = 10000, CancellationToken ct = default)
+        => RunAsync($"disconnect {serial}", timeoutMs: timeoutMs, ct: ct);
+
     public Task<AdbCommandResult> InstallApkAsync(string serial, string apkPath, CancellationToken ct = default)
         => RunAsync($"-s {serial} install -r \"{apkPath}\"", timeoutMs: 180000, ct: ct);
 
