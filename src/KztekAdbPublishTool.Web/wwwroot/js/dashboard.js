@@ -342,10 +342,10 @@
         const btnRefresh = $id('btn-refresh');
         if (btnRefresh) {
             btnRefresh.addEventListener('click', async function () {
-                appendLog('Đang quét lại thiết bị...');
+                appendLog('Đang làm mới trạng thái thiết bị đang kết nối...');
                 try {
                     await apiPost('/api/devices/poll');
-                    showToast('Đã gửi lệnh quét lại', 'info');
+                    showToast('Đã làm mới trạng thái', 'info');
                 } catch (ex) {
                     appendLog('Lỗi: ' + ex.message);
                 }
