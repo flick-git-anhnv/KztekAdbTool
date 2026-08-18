@@ -42,8 +42,8 @@ Viết PRD phạm vi hẹp cho tính năng API Launch App: mục tiêu sản ph�
 - next_inputs: `docs/prd/PRD-adb-launch-app-api.md` (AC1-AC6 mức cao cần chi tiết hóa), `AdbCommandResult` struct (xem `AdbService.cs` để biết `ExitCode`, `StdOut`, `StdErr`, `Success`).
 
 ## Commit
-- Hash: [điền sau khi commit]
-- Đã push: [điền sau khi push]
+- Hash: 8771f1b
+- Đã push: Thất bại — 403 Permission denied (duongth411 không có quyền push lên flick-git-anhnv/KztekAdbTool). Cần xác thực thủ công.
 
 ---
 **Status icons:** ⬜ Todo | 🔄 In Progress | ✅ Done | 🛑 Blocked | ⏭️ Skipped

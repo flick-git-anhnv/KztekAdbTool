@@ -45,8 +45,8 @@ Estimate effort, xác nhận priority P1, phân bổ Senior Developer cho phần
 - next_inputs: `docs/planning/RESOURCE-adb-launch-app-api.md` (estimate effort + phân bổ team) là input cho Project Manager lập task board/sprint plan ở STEP-1.4; `docs/prd/PRD-adb-launch-app-api.md` và `docs/user-stories/US-adb-launch-app-api.md` cũng cần để xây sprint backlog
 
 ## Commit
-- Hash: [điền sau khi commit]
-- Đã push: [điền sau khi push]
+- Hash: e8ee96b
+- Đã push: có
 
 ---
 **Status icons:** ⬜ Todo | 🔄 In Progress | ✅ Done | 🛑 Blocked | ⏭️ Skipped

@@ -43,8 +43,8 @@ Chi tiết hóa acceptance criteria theo format Given/When/Then, viết user sto
 - next_inputs: `docs/user-stories/US-adb-launch-app-api.md` (SC-01 đến SC-08 + BR1-BR6 + EC1-EC7 + Q1-Q5 để Tech Lead thiết kế API contract), `docs/prd/PRD-adb-launch-app-api.md` (Non-goals và Scope).
 
 ## Commit
-- Hash: [điền sau khi commit]
-- Đã push: [điền sau khi push]
+- Hash: dcb475c
+- Đã push: Không — remote trả 403 (không có quyền push), cần xác thực thủ công
 
 ---
 **Status icons:** ⬜ Todo | 🔄 In Progress | ✅ Done | 🛑 Blocked | ⏭️ Skipped
