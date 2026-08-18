@@ -64,8 +64,8 @@ Viết test plan, test case chi tiết cho mọi AC (happy path + error paths), 
 - next_inputs: `docs/test-cases/TC-adb-launch-app-api.md` (kết quả đầy đủ), `docs/test-plans/TEST-PLAN-adb-launch-app-api.md` (chiến lược và giới hạn môi trường). QA Lead sign-off dựa trên 2 file này + xác nhận 42/42 unit test PASS.
 
 ## Commit
-- Hash: [điền sau khi commit]
-- Đã push: [điền sau khi push]
+- Hash: 015db75
+- Đã push: chờ push
 
 ---
 **Status icons:** ⬜ Todo | 🔄 In Progress | ✅ Done | 🛑 Blocked | ⏭️ Skipped

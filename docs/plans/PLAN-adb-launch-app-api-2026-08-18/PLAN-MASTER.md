@@ -1,7 +1,7 @@
 ---
 task: adb-launch-app-api
 created: 2026-08-18
-updated: 2026-08-18 16:47
+updated: 2026-08-18 17:00
 status: active
 workflow: WF-FEATURE
 priority: P1
@@ -58,7 +58,7 @@ Bổ sung 1 API mới cho server `KztekAdbPublishTool.Web` (ASP.NET Core Minimal
 
 | # | Bước | Agent | Status | Step file | Hoàn thành lúc |
 |---|------|-------|--------|-----------|-----------------|
-| 4.1 | Viết test plan, thực thi test case, log kết quả | QA Engineer | ⬜ | `steps/STEP-4.1-qa-engineer-test.md` | - |
+| 4.1 | Viết test plan, thực thi test case, log kết quả | QA Engineer | ✅ | `steps/STEP-4.1-qa-engineer-test.md` | 2026-08-18 17:00 |
 | 4.2 | Sign-off chất lượng (P1 — bắt buộc QA Lead) | QA Lead | ⬜ | `steps/STEP-4.2-qa-lead-signoff.md` | - |
 | 4.3 | Deploy lên môi trường tương ứng | DevOps Engineer | ⬜ | `steps/STEP-4.3-devops-engineer-deploy.md` | - |
 | 4.4 | Approve staging, verify smoke test, approve + deploy production | DevOps Lead | ⬜ | `steps/STEP-4.4-devops-lead-approve.md` | - |
@@ -99,6 +99,7 @@ Không có
 | 2026-08-18 16:19 | STEP-2.1 Done — TDD chốt POST /api/launch-app + IEndpointFilter + config LaunchApp:ApiKey (env `LaunchApp__ApiKey`); Q1-Q5 quyết định hết; DOCX OK, PDF fail xelatex; Phase 2 hoàn thành | Tech Lead |
 | 2026-08-18 16:38 | STEP-3.1 Done — 3 file mới (LaunchAppSettings, ApiKeyEndpointFilter, LaunchAppEndpoints); Program.cs + test csproj sửa; 22 test mới, 42/42 pass; appsettings.json bị hook blocked (ghi chú); CODE-GRAPH cập nhật | Senior Developer |
 | 2026-08-18 16:47 | STEP-3.2 Done — Code review 14/14 mục PASS; build sạch, 42/42 test verify lại PASS; security-audit-stride: OWASP 7 Pass + 3 N/A + 0 Fail, STRIDE 6/6 Pass; APPROVE merge; không escalate CTO | Tech Lead |
+| 2026-08-18 17:00 | STEP-4.1 Done — NHÓM A (4 case HTTP thật PASS: TC-002/003/004/005 + SC-07 + EC6); NHÓM B (TC-001/006/007 verify gián tiếp qua unit test 42/42 PASS); GIỚI HẠN: môi trường không có thiết bị Android thật — cần smoke test thủ công trước production | QA Engineer |
 
 ---
 **Status icons:** ⬜ Todo | 🔄 In Progress | ✅ Done | 🛑 Blocked | ⏭️ Skipped
