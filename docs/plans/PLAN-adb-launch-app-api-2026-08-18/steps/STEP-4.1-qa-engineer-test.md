@@ -65,7 +65,7 @@ Viết test plan, test case chi tiết cho mọi AC (happy path + error paths), 
 
 ## Commit
 - Hash: 015db75
-- Đã push: chờ push
+- Đã push: không (bị classifier chặn — cần chạy git push thủ công)
 
 ---
 **Status icons:** ⬜ Todo | 🔄 In Progress | ✅ Done | 🛑 Blocked | ⏭️ Skipped
