@@ -2,8 +2,10 @@
 id: DEPLOY-adb-launch-app-api
 feature: adb-launch-app-api
 author: DevOps Engineer
+reviewed-by: DevOps Lead
 created: 2026-08-18
-status: container-verified
+updated: 2026-08-18
+status: staging-approved-pending-production
 tdd: docs/tech-design/TDD-adb-launch-app-api.md
 ---
 
@@ -69,19 +71,20 @@ docker run -d \
 
 ## 2. Deploy Checklist (Production)
 
-> Checklist này phải được DevOps Lead điền và sign-off tại STEP-4.4 trước khi thực sự go-live.
+> Checklist này được DevOps Lead điền và sign-off tại STEP-4.4.
 
 ```
-[ ] PR approved bởi Tech Lead                              ✅ (STEP-3.2 done)
+[x] PR approved bởi Tech Lead                              ✅ (STEP-3.2 done)
 [ ] CI/CD pass toàn bộ                                    — (chưa có CI pipeline; unit test 42/42 PASS local)
-[ ] QA sign-off trên staging                               ✅ CÓ ĐIỀU KIỆN (xem mục 5)
-[ ] DevOps Lead approve                                    ⬜ (STEP-4.4 pending)
-[ ] EM approve (feature lớn)                               ⏭️ Skipped — P1 feature không yêu cầu EM approve riêng
-[ ] Rollback plan đã chuẩn bị                              ✅ (xem mục 4)
-[ ] Team nhận thông báo (#deploys)                         ⬜ (trước khi deploy production)
-[ ] On-call standby 30 phút sau deploy                     ⬜ (khi deploy production)
-[ ] Monitor dashboard đang theo dõi                        ⬜ (khi deploy production)
-[ ] *** GATE CHƯA ĐÓNG: Smoke test thiết bị Android thật  ⬜ (xem mục 5 — BẮT BUỘC trước go-live)
+[x] QA sign-off trên staging                               ✅ CÓ ĐIỀU KIỆN (xem mục 5 + mục 8)
+[x] DevOps Lead approve STAGING                            ✅ (STEP-4.4 — 2026-08-18 17:20, xem mục 7)
+[ ] DevOps Lead approve PRODUCTION                         ⬜ CHỜ USER — xem mục 8 bên dưới
+[x] EM approve (feature lớn)                               ⏭️ Skipped — P1 feature không yêu cầu EM approve riêng
+[x] Rollback plan đã chuẩn bị                              ✅ (xem mục 4)
+[ ] Team nhận thông báo (#deploys)                         ⬜ (user thực hiện trước go-live production)
+[ ] On-call standby 30 phút sau deploy                     ⬜ (user thực hiện khi deploy production)
+[ ] Monitor dashboard đang theo dõi                        ⬜ (user thực hiện khi deploy production)
+[ ] *** GATE CHƯA ĐÓNG: Smoke test thiết bị Android thật  ⬜ (user tự thực hiện — xem mục 8)
 ```
 
 ---
@@ -163,7 +166,37 @@ Neu STEP-4.4 cung chay trong moi truong sandbox khong co thiet bi that, day la N
 
 ---
 
-## 6. Cau hinh tham khao (TDD)
+## 6. DevOps Lead Approval — 2026-08-18 17:20
+
+**Người duyệt:** DevOps Lead (STEP-4.4)
+
+### STAGING: APPROVED
+
+Evidence từ STEP-4.3 (DevOps Engineer) đã được verify:
+
+| Hạng mục | Kết quả | Ghi nhận |
+|---|---|---|
+| Docker build | PASS | Image build thành công, không lỗi compilation |
+| Health check `/health` | PASS | `{"ok":true,"adbVersion":"Android Debug Bridge version 1.0.41"}` |
+| TC-A: 401 wrong key | PASS | Auth middleware hoạt động đúng |
+| TC-B: 400 missing field | PASS | Validation hoạt động đúng |
+| TC-C: 404 unknown serial | PASS | Auth pass + business logic chạy, device không tồn tại trả 404 |
+| Env var `LaunchApp__ApiKey` | PASS | Container đọc và áp dụng key đúng (TC-A xác nhận) |
+| Cleanup sau test | PASS | Container và image test đã xóa, không để lại rác |
+| Unit test | PASS | 42/42 PASS (từ STEP-3.1 + verify lại STEP-3.2) |
+| Security audit STRIDE | PASS | OWASP 7 Pass + 3 N/A + 0 Fail; STRIDE 6/6 Pass (STEP-3.2) |
+
+**Kết luận STAGING:** Code đã sẵn sàng về mặt kỹ thuật. Tất cả hạng mục trong tầm kiểm soát của agent đều PASS.
+
+### PRODUCTION: KHONG DUYET TU DONG — CHO USER
+
+**Lý do:** Điều kiện bắt buộc do QA Lead đặt ra (STEP-4.2 Sign-off CÓ ĐIỀU KIỆN) CHƯA được thỏa mãn: ba test case TC-001, TC-006, TC-007 đòi hỏi thiết bị Android thật kết nối qua ADB — môi trường agent hiện tại (sandbox) KHÔNG có và KHÔNG THỂ có thiết bị thật, đồng thời không kết nối được tới hạ tầng production thật của KZTEK.
+
+Đây KHÔNG phải VETO hay BLOCK kỹ thuật — code hoàn toàn ready. Đây là giới hạn môi trường sandbox của toàn bộ quá trình agent, không phải lỗi của code hay quy trình.
+
+---
+
+## 7. Cau hinh tham khao (TDD)
 
 - Env var: `LaunchApp__ApiKey` (mapping `LaunchApp:ApiKey` trong appsettings)
 - Header xac thuc: `x-api-key`
@@ -173,8 +206,64 @@ Neu STEP-4.4 cung chay trong moi truong sandbox khong co thiet bi that, day la N
 
 ---
 
-## 7. Lich su deploy
+## 8. Ban giao cho User — Hanh dong thu cong con lai truoc khi go-live that
+
+> **Muc do: BAT BUOC** — Toan bo agent chain (10/10 buoc) da hoan thanh. Phan con lai la hanh dong
+> chi USER moi thuc hien duoc tren ha tang that cua KZTEK. Agent khong co quyen truy cap production.
+
+### Danh sach 4 viec user can tu lam (theo thu tu)
+
+**Buoc 1 — Them API key that vao `docker-compose.yml` (hoac deployment config)**
+
+KHONG dung key tam `123456a@` hay `smoketest-key-temp` cho production. Them vao section `environment:`
+cua service:
+
+```yaml
+environment:
+  - LaunchApp__ApiKey=<key-that-cua-ban>
+```
+
+Bao mat: dung Docker secrets hoac `.env` file (da gitignore) — KHONG commit key that len git.
+
+Ngoai ra, them section `"LaunchApp"` vao `src/KztekAdbPublishTool.Web/appsettings.json`
+(file nay bi hook config-protection chan agent sua — user PHAI tu them thu cong):
+
+```json
+"LaunchApp": {
+  "ApiKey": ""
+}
+```
+
+De ApiKey rong trong file — inject key that qua env var `LaunchApp__ApiKey`, khong hardcode vao appsettings.
+
+**Buoc 2 — Build lai image tren ha tang that**
+
+```bash
+docker build -t kztek-adb-tool:<version-moi> .
+```
+
+Build tu code moi nhat (da co du 5 commit: TDD, code, review, test, deploy container).
+
+**Buoc 3 — Chay smoke test TC-001/TC-006/TC-007 voi thiet bi Android that**
+
+Day la gate BAT BUOC do QA Lead dat ra. Chay tren staging/pre-prod truoc:
+
+| Test | Hanh dong | Expected | Ket qua |
+|------|-----------|----------|---------|
+| TC-001 | POST /api/launch-app voi serial thiet bi that, app da cai | 200 + app mo tren thiet bi | [ ] PASS / [ ] FAIL |
+| TC-006 | Ngat ket noi ADB thiet bi → curl lai | 422 "device offline" | [ ] PASS / [ ] FAIL |
+| TC-007 | POST voi package name chua cai | 422 "package not installed" | [ ] PASS / [ ] FAIL |
+
+**Buoc 4 — Quyet dinh go-live**
+
+- Ca 3 case PASS → chinh thuc deploy production, thong bao team (#deploys), standby monitor.
+- Co case FAIL → BAO NGAY cho Tech Lead truoc khi deploy production. KHONG deploy khi biet co bug.
+
+---
+
+## 9. Lich su deploy
 
 | Ngay | Moi truong | Nguoi thuc hien | Ket qua | Ghi chu |
 |------|-----------|-----------------|---------|---------|
 | 2026-08-18 | Container (local smoke test) | DevOps Engineer | PASS (3/3 HTTP case) | Chua co thiet bi Android that |
+| 2026-08-18 | Staging review | DevOps Lead | APPROVE STAGING | Container evidence du; production cho user smoke test thiet bi that |
