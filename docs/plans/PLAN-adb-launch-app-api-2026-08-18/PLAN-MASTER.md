@@ -79,6 +79,9 @@ Bổ sung 1 API mới cho server `KztekAdbPublishTool.Web` (ASP.NET Core Minimal
 ## Blockers
 Không có
 
+## Ghi chú xử lý ngoài quy trình agent
+- `appsettings.json` bị hook `config-protection` chặn sửa (file bảo vệ). Chức năng không bị ảnh hưởng (POCO `LaunchAppSettings.ApiKey` default rỗng → fail-safe 401). User đã xác nhận (2026-08-18) sẽ **tự tay** thêm section `"LaunchApp": { "ApiKey": "" }` vào `src/KztekAdbPublishTool.Web/appsettings.json` ngoài quy trình agent — không cần agent nào xử lý lại việc này.
+
 ## Quyết định / Ghi chú tổng
 - Tái sử dụng `AdbService.LaunchAppAsync(serial, packageName, ct)` — KHÔNG dùng lệnh `monkey` thô (xem comment trong `AdbService.cs` ~dòng 167-188).
 - Auth bằng API key tĩnh (`x-api-key` header) là cơ chế MỚI hoàn toàn cho project này — Tech Lead quyết định phạm vi áp dụng (chỉ route mới hay cả `/api/install` và các route cũ).
