@@ -106,8 +106,8 @@ C# không cho phép static class làm type argument. Thay vì tạo marker class
 - next_inputs: File cần review: `src/KztekAdbPublishTool.Web/Endpoints/ApiKeyEndpointFilter.cs` (constant-time compare, fail-safe), `src/KztekAdbPublishTool.Web/Endpoints/LaunchAppEndpoints.cs` (filter gắn đúng chỗ, mapping đủ 8 status code), `src/KztekAdbPublishTool.Web/Program.cs` (DI config), test files để verify coverage.
 
 ## Commit
-- Hash: [điền sau khi commit]
-- Đã push: [điền sau khi push]
+- Hash: f0581a8
+- Đã push: có (docker-deploy → origin/docker-deploy)
 
 ---
 **Status icons:** ⬜ Todo | 🔄 In Progress | ✅ Done | 🛑 Blocked | ⏭️ Skipped
