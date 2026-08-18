@@ -10,6 +10,8 @@ var builder = WebApplication.CreateBuilder(args);
 // ── Configuration ────────────────────────────────────────────────────────────
 builder.Services.Configure<AdbSettings>(
     builder.Configuration.GetSection(AdbSettings.SectionName));
+builder.Services.Configure<LaunchAppSettings>(
+    builder.Configuration.GetSection(LaunchAppSettings.SectionName));
 
 // ── Kestrel: giới hạn upload 500 MB ─────────────────────────────────────────
 builder.WebHost.ConfigureKestrel(options =>
@@ -66,6 +68,9 @@ app.MapHealthEndpoints();
 app.MapInstallEndpoints();
 app.MapScanEndpoints();
 app.MapApkEndpoints();
+
+// ── Endpoints [STEP-3.1 adb-launch-app-api] ──────────────────────────────────
+app.MapLaunchAppEndpoints();
 
 // ── Pages ─────────────────────────────────────────────────────────────────────
 app.MapRazorPages();

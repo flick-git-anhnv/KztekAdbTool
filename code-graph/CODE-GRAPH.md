@@ -12,6 +12,7 @@ updated_by: Senior Developer
 |---|---|---|
 | 2026-08-05 | Senior Developer | Tạo mới — Phase 1 Foundation (STEP 1.1–1.3) |
 | 2026-08-10 | Senior Developer | Cập nhật đầy đủ sau Phase 2+3 hoàn tất; thêm `DeviceState.Remove()` (bug fix R9); bổ sung toàn bộ module Services/Endpoints/State còn thiếu |
+| 2026-08-18 | Senior Developer | STEP-3.1: Thêm `POST /api/launch-app` — `LaunchAppSettings`, `ApiKeyEndpointFilter`, `LaunchAppEndpoints`; cập nhật callers của `AdbService`, `DeviceState`, `Program.cs` |
 
 ---
 
@@ -77,16 +78,19 @@ src/KztekAdbPublishTool.Web/
 
 | Module | Phụ thuộc vào | Được gọi bởi (Callers) | Confidence | Last verified |
 |---|---|---|---|---|
-| `Program.cs` | AdbSettings, AdbService, DeviceRepository, ApkManifestReader, DevicePollWorker, DeviceHub, DeviceState, InstallCoordinator, ScanCoordinator, PollControlService | — (entry point) | CONFIRMED | 2026-08-10 |
+| `Program.cs` | AdbSettings, LaunchAppSettings, AdbService, DeviceRepository, ApkManifestReader, DevicePollWorker, DeviceHub, DeviceState, InstallCoordinator, ScanCoordinator, PollControlService | — (entry point) | CONFIRMED | 2026-08-18 |
 | `Configuration/AdbSettings` | — | Program.cs, AdbService, DeviceRepository, DevicePollWorker | CONFIRMED | 2026-08-10 |
-| `Services/AdbService` | IOptions\<AdbSettings\>, System.Diagnostics.Process | DevicePollWorker, InstallCoordinator | CONFIRMED | 2026-08-10 |
+| `Configuration/LaunchAppSettings` | — | Program.cs, ApiKeyEndpointFilter | CONFIRMED | 2026-08-18 |
+| `Services/AdbService` | IOptions\<AdbSettings\>, System.Diagnostics.Process | DevicePollWorker, InstallCoordinator, LaunchAppEndpoints | CONFIRMED | 2026-08-18 |
 | `Services/DeviceRepository` | IOptions\<AdbSettings\>, Microsoft.Data.Sqlite, Models/DeviceRecord | DevicePollWorker, DeviceEndpoints, InstallEndpoints, ApkEndpoints, InstallCoordinator | CONFIRMED | 2026-08-10 |
 | `Services/ApkManifestReader` | System.IO.Compression | ApkEndpoints | CONFIRMED | 2026-08-10 |
 | `Services/InstallCoordinator` | AdbService, DeviceRepository, DeviceState, IHubContext\<DeviceHub\> | InstallEndpoints | CONFIRMED | 2026-08-10 |
 | `Services/PollControlService` | — | DevicePollWorker, DeviceEndpoints | CONFIRMED | 2026-08-10 |
 | `Services/ScanCoordinator` | IHubContext\<DeviceHub\>, ScanRangeParser | ScanEndpoints | CONFIRMED | 2026-08-10 |
 | `Services/ScanRangeParser` | — | ScanCoordinator | CONFIRMED | 2026-08-10 |
-| `State/DeviceState` | System.Collections.Concurrent, Models/DeviceRecord | DevicePollWorker, DeviceEndpoints, InstallEndpoints, InstallCoordinator | CONFIRMED | 2026-08-10 |
+| `State/DeviceState` | System.Collections.Concurrent, Models/DeviceRecord | DevicePollWorker, DeviceEndpoints, InstallEndpoints, InstallCoordinator, LaunchAppEndpoints | CONFIRMED | 2026-08-18 |
+| `Endpoints/ApiKeyEndpointFilter` | IOptions\<LaunchAppSettings\>, ILogger | LaunchAppEndpoints (.AddEndpointFilter) | CONFIRMED | 2026-08-18 |
+| `Endpoints/LaunchAppEndpoints` | DeviceState, AdbService, ApiKeyEndpointFilter, ILoggerFactory | Program.cs (MapLaunchAppEndpoints) | CONFIRMED | 2026-08-18 |
 | `Hubs/DeviceHub` | Microsoft.AspNetCore.SignalR.Hub | Program.cs (MapHub), DevicePollWorker, InstallCoordinator, ScanCoordinator | CONFIRMED | 2026-08-10 |
 | `Workers/DevicePollWorker` | IOptions\<AdbSettings\>, AdbService, DeviceRepository, DeviceState, PollControlService, IHubContext\<DeviceHub\> | Program.cs (AddHostedService) | CONFIRMED | 2026-08-10 |
 | `Models/DeviceRecord` | — | DeviceRepository, DeviceState, DevicePollWorker, InstallCoordinator, API JSON response | CONFIRMED | 2026-08-10 |
@@ -119,6 +123,7 @@ src/KztekAdbPublishTool.Web/
 | POST | `/api/settings/package` | DeviceEndpoints → DeviceRepository | ✅ |
 | POST | `/api/polling/toggle` | DeviceEndpoints → PollControlService + DeviceRepository | ✅ |
 | POST | `/api/devices/poll` | DeviceEndpoints → PollControlService.TriggerAsync | ✅ |
+| POST | `/api/launch-app` | LaunchAppEndpoints → ApiKeyEndpointFilter → DeviceState → AdbService | ✅ STEP-3.1 2026-08-18 |
 
 ### 2.4 SignalR Events (server → client)
 
@@ -131,7 +136,7 @@ src/KztekAdbPublishTool.Web/
 | `ScanFound` | `string ipPort` | ScanCoordinator | ✅ |
 | `ScanCompleted` | `int total, int found` | ScanCoordinator | ✅ |
 
-### 2.5 Configuration (appsettings.json — section "Adb")
+### 2.5 Configuration (appsettings.json — section "Adb" và "LaunchApp")
 
 | Key | Default (production) | Default (development) | Ghi chú |
 |---|---|---|---|
@@ -140,6 +145,7 @@ src/KztekAdbPublishTool.Web/
 | `DbPath` | `/app/data/adbpublishtool.db` | `adbpublishtool-dev.db` | SQLite DB |
 | `UploadsPath` | `/app/uploads` | `uploads-dev` | Thư mục APK tạm |
 | `MaxUploadBytes` | `500000000` | `500000000` | 500 MB |
+| `LaunchApp:ApiKey` | `""` (fail-safe) | `""` | Override bằng env var `LaunchApp__ApiKey`; rỗng = 401 mọi request (STEP-3.1) |
 | Kestrel `MaxRequestBodySize` | `500000000` | inherited | Set trong Program.cs |
 
 ---
