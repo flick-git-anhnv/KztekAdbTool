@@ -42,8 +42,8 @@ Không có — task board phản ánh đúng quyết định từ STEP-1.3 (P1, 
 - next_inputs: `docs/prd/PRD-adb-launch-app-api.md` + `docs/user-stories/US-adb-launch-app-api.md` + `docs/planning/SPRINT-adb-launch-app-api.md` — 3 file Tech Lead PHẢI đọc trước khi viết TDD (T-2.1)
 
 ## Commit
-- Hash: [điền sau khi commit]
-- Đã push: [điền sau khi push]
+- Hash: 1582e98
+- Đã push: có
 
 ---
 **Status icons:** ⬜ Todo | 🔄 In Progress | ✅ Done | 🛑 Blocked | ⏭️ Skipped
