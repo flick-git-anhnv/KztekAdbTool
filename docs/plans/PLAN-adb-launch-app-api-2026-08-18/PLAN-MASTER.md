@@ -1,7 +1,7 @@
 ---
 task: adb-launch-app-api
 created: 2026-08-18
-updated: 2026-08-18 16:11
+updated: 2026-08-18 16:19
 status: active
 workflow: WF-FEATURE
 priority: P1
@@ -45,7 +45,7 @@ Bổ sung 1 API mới cho server `KztekAdbPublishTool.Web` (ASP.NET Core Minimal
 
 | # | Bước | Agent | Status | Step file | Hoàn thành lúc |
 |---|------|-------|--------|-----------|-----------------|
-| 2.1 | Viết TDD: API contract, auth middleware thiết kế, error handling, cấu hình appsettings | Tech Lead | ⬜ | `steps/STEP-2.1-tech-lead-tdd.md` | - |
+| 2.1 | Viết TDD: API contract, auth middleware thiết kế, error handling, cấu hình appsettings | Tech Lead | ✅ | `steps/STEP-2.1-tech-lead-tdd.md` | 2026-08-18 16:19 |
 
 ### Phase 3: Phát triển
 
@@ -93,6 +93,7 @@ Không có
 | 2026-08-18 15:56 | STEP-1.2 Done — User story 8 scenario Given/When/Then, DOCX OK, PDF thất bại (xelatex) | Business Analyst |
 | 2026-08-18 16:07 | STEP-1.3 Done — Priority P1, Senior Dev phụ trách toàn bộ code, estimate ~6–10h, RESOURCE tạo xong (DOCX OK, PDF fail xelatex) | Engineering Manager |
 | 2026-08-18 16:11 | STEP-1.4 Done — Sprint plan 7 task (T-2.1→T-4.4) tạo xong, DOCX OK, PDF fail xelatex; Phase 1 hoàn thành | Project Manager |
+| 2026-08-18 16:19 | STEP-2.1 Done — TDD chốt POST /api/launch-app + IEndpointFilter + config LaunchApp:ApiKey (env `LaunchApp__ApiKey`); Q1-Q5 quyết định hết; DOCX OK, PDF fail xelatex; Phase 2 hoàn thành | Tech Lead |
 
 ---
 **Status icons:** ⬜ Todo | 🔄 In Progress | ✅ Done | 🛑 Blocked | ⏭️ Skipped
