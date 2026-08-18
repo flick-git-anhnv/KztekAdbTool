@@ -107,8 +107,8 @@ Viết TDD đầy đủ cho tính năng API Launch App. Tech Lead quyết địn
   - Docker Compose (STEP-4.3 DevOps): thêm `LaunchApp__ApiKey=<value>` vào `docker-compose.yml`, KHÔNG commit key thật.
 
 ## Commit
-- Hash: [điền sau khi commit]
-- Đã push: [điền sau khi push]
+- Hash: cd50c59 (initial), <sẽ có commit chốt tiếp theo cho hash + push log này>
+- Đã push: có — `docker-deploy 7a3eb7b..cd50c59` lên `origin/docker-deploy`
 
 ---
 **Status icons:** ⬜ Todo | 🔄 In Progress | ✅ Done | 🛑 Blocked | ⏭️ Skipped
