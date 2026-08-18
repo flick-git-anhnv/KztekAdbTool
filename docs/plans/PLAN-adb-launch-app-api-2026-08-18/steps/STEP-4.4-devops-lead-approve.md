@@ -49,8 +49,8 @@ Verify smoke test kết quả từ DevOps Engineer, approve staging, sau đó ap
 - next_inputs: Không có — phần còn lại là hành động thủ công của user trên hạ tầng thật, ngoài phạm vi agent.
 
 ## Commit
-- Hash: [điền sau khi commit]
-- Đã push: [điền sau khi push]
+- Hash: 09d2396
+- Đã push: có — docker-deploy → origin/docker-deploy
 
 ---
 **Status icons:** ⬜ Todo | 🔄 In Progress | ✅ Done | 🛑 Blocked | ⏭️ Skipped
