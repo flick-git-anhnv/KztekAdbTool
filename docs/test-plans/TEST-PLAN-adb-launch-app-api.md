@@ -98,3 +98,52 @@ Xem chi tiết tại: `docs/test-cases/TC-adb-launch-app-api.md`
 - Regression SC-07: PASS — `GET /api/devices` không bị ảnh hưởng
 - Bug phát hiện: Không có
 - Dotnet test sau khi hoàn thành: 42/42 PASS
+
+---
+
+## 10. QA Lead Sign-off
+
+**Ngày:** 2026-08-18 17:07
+**QA Lead:** trongtv@kztek.vn
+
+### Đối chiếu coverage với 8 AC (SC-01 đến SC-08)
+
+| AC | Mô tả | TC | Phương pháp verify | Kết quả |
+|---|---|---|---|---|
+| SC-01 | Happy path — launch thành công → 200 | TC-001 | Unit test gián tiếp (`MapAdbResult_ExitCode0_Returns200`, `CheckDeviceState_OnlineDevice_ReturnsNull`) | Pass gián tiếp |
+| SC-02 | API key sai hoặc thiếu → 401 | TC-002, TC-003 | HTTP thật | PASS |
+| SC-03 | Serial không tồn tại → 404 | TC-004 | HTTP thật | PASS |
+| SC-04 | Package name rỗng/invalid → 400 | TC-005a/b/c | HTTP thật (3 sub-case) | PASS |
+| SC-05 | Device Offline → 422 | TC-006 | Unit test gián tiếp (`CheckDeviceState_OfflineDevice_Returns422`) | Pass gián tiếp |
+| SC-06 | App không cài trên thiết bị → 422 | TC-007 | Unit test gián tiếp (`MapAdbResult_AppNotInstalled_Returns422`) | Pass gián tiếp |
+| SC-07 | Route cũ không bị ảnh hưởng | Regression test | HTTP thật (`GET /api/devices` không có key → 200) | PASS |
+| SC-08 | API key override bằng env var | Partial | Không test đầy đủ qua HTTP — rủi ro ghi nhận, verify khi DevOps deploy docker với env `LaunchApp__ApiKey` | Conditional |
+
+**Coverage: 8/8 SC đã được cover** (SC-08 partial — điều kiện verify rõ ràng tại STEP-4.3/4.4).
+
+### Trạng thái bug
+
+- P0 bug open: **0**
+- P1 bug open: **0**
+- Tổng bug phát hiện: **0**
+
+### Quyết định: SIGN-OFF CÓ ĐIỀU KIỆN
+
+**Cho phép tiếp tục sang STEP-4.3 (DevOps Engineer deploy staging).**
+
+**ĐIỀU KIỆN BẮT BUỘC trước khi approve production (STEP-4.4):**
+
+> TC-001 (200 OK happy path), TC-006 (422 device offline), TC-007 (422 app not installed) chỉ được verify gián tiếp qua unit test — CHƯA verify qua HTTP thật với thiết bị Android thật/emulator, do giới hạn môi trường sandbox (không có thiết bị kết nối).
+>
+> DevOps Engineer (STEP-4.3) và DevOps Lead (STEP-4.4) **PHẢI** thực hiện smoke test thủ công với thiết bị Android thật hoặc emulator tại môi trường staging, bao gồm tối thiểu 3 case sau:
+> 1. TC-001: Gọi POST /api/launch-app với thiết bị Online + app đã cài → phải trả HTTP 200
+> 2. TC-006: Gọi với thiết bị hiện diện trong DeviceState nhưng Offline → phải trả HTTP 422
+> 3. TC-007: Gọi với thiết bị Online nhưng app chưa cài → phải trả HTTP 422
+>
+> **Nếu bất kỳ case nào trong 3 case trên fail tại staging → KHÔNG được deploy production, phải quay lại fix và thông báo QA Lead.**
+>
+> Ngoài ra, SC-08 (env var override) cần được verify khi deploy docker bằng cách đặt `LaunchApp__ApiKey=<key>` trong docker-compose/env file và xác nhận endpoint hoạt động đúng với key mới.
+
+**Sign-off:** [ ✅ P0=0 ] [ ✅ P1=0 ] [ ✅ Coverage 8/8 SC ] [ ⚠️ Smoke test thiết bị thật bắt buộc trước production ]
+
+**QA Lead ký:** trongtv@kztek.vn — 2026-08-18 17:07
