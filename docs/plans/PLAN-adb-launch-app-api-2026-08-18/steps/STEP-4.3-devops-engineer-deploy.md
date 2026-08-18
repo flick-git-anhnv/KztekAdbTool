@@ -50,8 +50,8 @@ Deploy bản mới lên môi trường tương ứng (staging hoặc production 
 - next_inputs: `docs/devops/DEPLOY-adb-launch-app-api.md` (ket qua smoke test container + checklist deploy con thieu + rollback plan), `docs/tech-design/TDD-adb-launch-app-api.md` (API contract day du), `docs/test-plans/TEST-PLAN-adb-launch-app-api.md` muc 10 (dieu kien sign-off day du). DevOps Lead can xac nhan viec co hoan thanh duoc smoke test thiet bi Android that o buoc 4.4 hay khong.
 
 ## Commit
-- Hash: [điền sau khi commit]
-- Đã push: [điền sau khi push]
+- Hash: e5d579d
+- Đã push: có (docker-deploy → origin, e5d579d)
 
 ---
 **Status icons:** ⬜ Todo | 🔄 In Progress | ✅ Done | 🛑 Blocked | ⏭️ Skipped
