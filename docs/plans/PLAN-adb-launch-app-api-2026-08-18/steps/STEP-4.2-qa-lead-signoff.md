@@ -47,8 +47,8 @@ DevOps Engineer (STEP-4.3) và DevOps Lead (STEP-4.4) PHẢI thực hiện smoke
 - next_inputs: `docs/test-plans/TEST-PLAN-adb-launch-app-api.md` mục 10 (điều kiện đầy đủ), `docs/tech-design/TDD-adb-launch-app-api.md` (API contract, cấu hình deploy), `docs/planning/SPRINT-adb-launch-app-api.md` (task board), `docs/prd/PRD-adb-launch-app-api.md` (context feature).
 
 ## Commit
-- Hash: [điền sau khi commit]
-- Đã push: [điền sau khi push]
+- Hash: a2258f0
+- Đã push: có (docker-deploy → origin/docker-deploy)
 
 ---
 **Status icons:** ⬜ Todo | 🔄 In Progress | ✅ Done | 🛑 Blocked | ⏭️ Skipped
