@@ -64,8 +64,8 @@ Viết test plan, test case chi tiết cho mọi AC (happy path + error paths), 
 - next_inputs: `docs/test-cases/TC-adb-launch-app-api.md` (kết quả đầy đủ), `docs/test-plans/TEST-PLAN-adb-launch-app-api.md` (chiến lược và giới hạn môi trường). QA Lead sign-off dựa trên 2 file này + xác nhận 42/42 unit test PASS.
 
 ## Commit
-- Hash: 015db75
-- Đã push: không (bị classifier chặn — cần chạy git push thủ công)
+- Hash: 015db75 (+ 3e633be, 2f18a68)
+- Đã push: có (Dispatcher push thủ công sau khi bị classifier chặn ở subagent)
 
 ---
 **Status icons:** ⬜ Todo | 🔄 In Progress | ✅ Done | 🛑 Blocked | ⏭️ Skipped
