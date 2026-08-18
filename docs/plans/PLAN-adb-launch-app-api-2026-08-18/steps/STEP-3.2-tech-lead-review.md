@@ -134,8 +134,8 @@ Kết quả Security Audit:
 - next_inputs: TDD `docs/tech-design/TDD-adb-launch-app-api.md` mục "Response schemas theo status code" (bảng mapping đầy đủ 8 status code). User story `docs/user-stories/US-adb-launch-app-api.md` cho 8 scenario SC-01..SC-08 và edge case EC1..EC7. Code endpoint tại `src/KztekAdbPublishTool.Web/Endpoints/LaunchAppEndpoints.cs`. Test hiện có 22 unit test — QA bổ sung integration/functional cho end-to-end path.
 
 ## Commit
-- Hash: [điền sau khi commit]
-- Đã push: [có/không]
+- Hash: 8d91b78
+- Đã push: có
 
 ---
 **Status icons:** ⬜ Todo | 🔄 In Progress | ✅ Done | 🛑 Blocked | ⏭️ Skipped
