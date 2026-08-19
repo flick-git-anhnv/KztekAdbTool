@@ -79,8 +79,8 @@ Verify độc lập fix 2.3: correctness của `ct.ThrowIfCancellationRequested(
 
 ## Commit
 
-- Hash: (điền sau commit)
-- Đã push: (sẽ push sau commit)
+- Hash: a1bc684
+- Đã push: (sẽ push ngay sau)
 
 ---
 **Status icons:** ⬜ Todo | 🔄 In Progress | ✅ Done | 🛑 Blocked | ⏭️ Skipped
