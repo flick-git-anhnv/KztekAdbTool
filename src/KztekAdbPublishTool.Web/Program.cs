@@ -72,6 +72,9 @@ app.MapApkEndpoints();
 // ── Endpoints [STEP-3.1 adb-launch-app-api] ──────────────────────────────────
 app.MapLaunchAppEndpoints();
 
+// ── Endpoints [adb-add-device-api] ────────────────────────────────────────────
+app.MapDeviceConnectionEndpoints();
+
 // ── Pages ─────────────────────────────────────────────────────────────────────
 app.MapRazorPages();
 

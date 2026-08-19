@@ -1,6 +1,6 @@
 ---
 project: KztekAdbPublishTool (multi-project solution)
-last_updated: 2026-08-10
+last_updated: 2026-08-19
 updated_by: Senior Developer
 ---
 
@@ -13,6 +13,7 @@ updated_by: Senior Developer
 | 2026-08-05 | Senior Developer | Tạo mới — Phase 1 Foundation (STEP 1.1–1.3) |
 | 2026-08-10 | Senior Developer | Cập nhật đầy đủ sau Phase 2+3 hoàn tất; thêm `DeviceState.Remove()` (bug fix R9); bổ sung toàn bộ module Services/Endpoints/State còn thiếu |
 | 2026-08-18 | Senior Developer | STEP-3.1: Thêm `POST /api/launch-app` — `LaunchAppSettings`, `ApiKeyEndpointFilter`, `LaunchAppEndpoints`; cập nhật callers của `AdbService`, `DeviceState`, `Program.cs` |
+| 2026-08-19 | Senior Developer | STEP-3.1 [adb-add-device-api]: Thêm `POST /api/devices/connect-by-ip` + `GET /api/devices/{serial}/status` — `DeviceConnectionEndpoints`; cập nhật callers của `AdbService`, `DeviceState`, `PollControlService`, `ApiKeyEndpointFilter`, `Program.cs` |
 
 ---
 
@@ -36,6 +37,7 @@ src/KztekAdbPublishTool.Web/
 │   └── AdbSettings.cs              ← POCO config (AdbPath, PollIntervalMs, DbPath, UploadsPath, MaxUploadBytes)
 ├── Endpoints/
 │   ├── ApkEndpoints.cs             ← POST /api/apk/upload, DELETE /api/apk
+│   ├── DeviceConnectionEndpoints.cs← POST /api/devices/connect-by-ip, GET /api/devices/{serial}/status (auth: ApiKeyEndpointFilter) [adb-add-device-api]
 │   ├── DeviceEndpoints.cs          ← POST /api/devices/{connect,connect-batch,remove,poll}, GET /api/devices, POST /api/settings/package, /api/polling/toggle
 │   ├── HealthEndpoints.cs          ← GET /health
 │   ├── InstallEndpoints.cs         ← POST /api/install
@@ -81,16 +83,17 @@ src/KztekAdbPublishTool.Web/
 | `Program.cs` | AdbSettings, LaunchAppSettings, AdbService, DeviceRepository, ApkManifestReader, DevicePollWorker, DeviceHub, DeviceState, InstallCoordinator, ScanCoordinator, PollControlService | — (entry point) | CONFIRMED | 2026-08-18 |
 | `Configuration/AdbSettings` | — | Program.cs, AdbService, DeviceRepository, DevicePollWorker | CONFIRMED | 2026-08-10 |
 | `Configuration/LaunchAppSettings` | — | Program.cs, ApiKeyEndpointFilter | CONFIRMED | 2026-08-18 |
-| `Services/AdbService` | IOptions\<AdbSettings\>, System.Diagnostics.Process | DevicePollWorker, InstallCoordinator, LaunchAppEndpoints | CONFIRMED | 2026-08-18 |
+| `Services/AdbService` | IOptions\<AdbSettings\>, System.Diagnostics.Process | DevicePollWorker, InstallCoordinator, LaunchAppEndpoints, DeviceConnectionEndpoints | CONFIRMED | 2026-08-19 |
 | `Services/DeviceRepository` | IOptions\<AdbSettings\>, Microsoft.Data.Sqlite, Models/DeviceRecord | DevicePollWorker, DeviceEndpoints, InstallEndpoints, ApkEndpoints, InstallCoordinator | CONFIRMED | 2026-08-10 |
 | `Services/ApkManifestReader` | System.IO.Compression | ApkEndpoints | CONFIRMED | 2026-08-10 |
 | `Services/InstallCoordinator` | AdbService, DeviceRepository, DeviceState, IHubContext\<DeviceHub\> | InstallEndpoints | CONFIRMED | 2026-08-10 |
-| `Services/PollControlService` | — | DevicePollWorker, DeviceEndpoints | CONFIRMED | 2026-08-10 |
+| `Services/PollControlService` | — | DevicePollWorker, DeviceEndpoints, DeviceConnectionEndpoints | CONFIRMED | 2026-08-19 |
 | `Services/ScanCoordinator` | IHubContext\<DeviceHub\>, ScanRangeParser | ScanEndpoints | CONFIRMED | 2026-08-10 |
 | `Services/ScanRangeParser` | — | ScanCoordinator | CONFIRMED | 2026-08-10 |
-| `State/DeviceState` | System.Collections.Concurrent, Models/DeviceRecord | DevicePollWorker, DeviceEndpoints, InstallEndpoints, InstallCoordinator, LaunchAppEndpoints | CONFIRMED | 2026-08-18 |
-| `Endpoints/ApiKeyEndpointFilter` | IOptions\<LaunchAppSettings\>, ILogger | LaunchAppEndpoints (.AddEndpointFilter) | CONFIRMED | 2026-08-18 |
+| `State/DeviceState` | System.Collections.Concurrent, Models/DeviceRecord | DevicePollWorker, DeviceEndpoints, InstallEndpoints, InstallCoordinator, LaunchAppEndpoints, DeviceConnectionEndpoints | CONFIRMED | 2026-08-19 |
+| `Endpoints/ApiKeyEndpointFilter` | IOptions\<LaunchAppSettings\>, ILogger | LaunchAppEndpoints (.AddEndpointFilter), DeviceConnectionEndpoints (.AddEndpointFilter) | CONFIRMED | 2026-08-19 |
 | `Endpoints/LaunchAppEndpoints` | DeviceState, AdbService, ApiKeyEndpointFilter, ILoggerFactory | Program.cs (MapLaunchAppEndpoints) | CONFIRMED | 2026-08-18 |
+| `Endpoints/DeviceConnectionEndpoints` | AdbService, PollControlService, DeviceState, ApiKeyEndpointFilter, ILoggerFactory | Program.cs (MapDeviceConnectionEndpoints) | CONFIRMED | 2026-08-19 |
 | `Hubs/DeviceHub` | Microsoft.AspNetCore.SignalR.Hub | Program.cs (MapHub), DevicePollWorker, InstallCoordinator, ScanCoordinator | CONFIRMED | 2026-08-10 |
 | `Workers/DevicePollWorker` | IOptions\<AdbSettings\>, AdbService, DeviceRepository, DeviceState, PollControlService, IHubContext\<DeviceHub\> | Program.cs (AddHostedService) | CONFIRMED | 2026-08-10 |
 | `Models/DeviceRecord` | — | DeviceRepository, DeviceState, DevicePollWorker, InstallCoordinator, API JSON response | CONFIRMED | 2026-08-10 |
@@ -124,6 +127,8 @@ src/KztekAdbPublishTool.Web/
 | POST | `/api/polling/toggle` | DeviceEndpoints → PollControlService + DeviceRepository | ✅ |
 | POST | `/api/devices/poll` | DeviceEndpoints → PollControlService.TriggerAsync | ✅ |
 | POST | `/api/launch-app` | LaunchAppEndpoints → ApiKeyEndpointFilter → DeviceState → AdbService | ✅ STEP-3.1 2026-08-18 |
+| POST | `/api/devices/connect-by-ip` | DeviceConnectionEndpoints → ApiKeyEndpointFilter → AdbService → PollControlService | ✅ STEP-3.1 [adb-add-device-api] 2026-08-19 |
+| GET | `/api/devices/{serial}/status` | DeviceConnectionEndpoints → ApiKeyEndpointFilter → DeviceState | ✅ STEP-3.1 [adb-add-device-api] 2026-08-19 |
 
 ### 2.4 SignalR Events (server → client)
 
