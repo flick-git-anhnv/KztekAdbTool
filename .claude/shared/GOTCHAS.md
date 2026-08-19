@@ -21,8 +21,9 @@
 | G005 | `md_to_docx_kztek.py` báo `✗ PDF thất bại` (RPC failed) nhưng PDF **vẫn được tạo hợp lệ** | `[SCRIPT]` | 2026-07-27 |
 | G006 | Tool "graphify" tên package PyPI thật là `graphifyy` (2 chữ y) — `pip install graphify` báo lỗi | `[CONFIG]` | 2026-07-29 |
 | G007 | Edit tool báo "updated successfully" nhưng **không ghi vào disk** trên Windows trong 1 số branch context | `[AGENT-LOOP]` | 2026-08-04 |
+| G008 | ASP.NET Core Minimal API: `IEndpointFilter` đọc lại `Request.Body` raw stream sẽ luôn ra rỗng vì model binding đã đọc hết body **TRƯỚC** filter chain | `[BACKEND-API]` | 2026-08-19 |
 
-**Category hiện có:** `[SCRIPT]` (lỗi Python script/tool) · `[ENCODING]` (lỗi mã hóa ký tự) · `[UI-BINDING]` (lỗi Avalonia/WinForms binding) · `[CONFIG]` (cài đặt sai, tên package sai) · `[GIT]` (git workflow) · `[AGENT-LOOP]` (agent bị stuck/loop)
+**Category hiện có:** `[SCRIPT]` (lỗi Python script/tool) · `[ENCODING]` (lỗi mã hóa ký tự) · `[UI-BINDING]` (lỗi Avalonia/WinForms binding) · `[CONFIG]` (cài đặt sai, tên package sai) · `[GIT]` (git workflow) · `[AGENT-LOOP]` (agent bị stuck/loop) · `[BACKEND-API]` (lỗi ASP.NET Core / Minimal API pipeline)
 
 ---
 
@@ -272,6 +273,19 @@ tạo skill `.claude/commands/graphify.md` ngay sau đó có ghi lại gotcha n�
 
 **Không cần làm lại:** Không cần thử biến thể tên khác (`graphify-cli`, `pygraphify`, ...) —
 `graphifyy` là tên chính thức duy nhất, đã xác nhận qua `pip index versions`.
+
+---
+
+## G008 — ASP.NET Core Minimal API: `IEndpointFilter` đọc `Request.Body` raw stream luôn ra rỗng vì model binding chạy trước
+**Category:** `[BACKEND-API]`
+
+**Ngày phát hiện:** 2026-08-19
+**Môi trường:** ASP.NET Core 8 Minimal API (KztekAdbPublishTool.Web), `IEndpointFilter` đăng ký qua `.AddEndpointFilter<T>()`
+**Vấn đề:** Filter cần log lại JSON body của request (để ghi audit log) đọc `http.Request.Body` bằng `EnableBuffering()` + `StreamReader.ReadToEndAsync()` bên trong `InvokeAsync()` — luôn trả về chuỗi rỗng, dù request thực sự có JSON body hợp lệ (curl kèm `-d '{...}'`). Không có exception nào được throw — silent fail, rất khó phát hiện nếu code có catch-all nuốt lỗi.
+**Nguyên nhân:** Trong Minimal API, **model binding** (route handler param binding, VD `async (ConnectByIpRequest req, ...) => ...`) chạy `ReadFromJsonAsync()` để bind tham số **TRƯỚC KHI** filter chain trong `InvokeAsync()` được gọi. Khi filter chạy tới, `Request.Body` stream đã bị đọc hết tới EOF — gọi `EnableBuffering()` + rewind trong filter là quá muộn, vì việc buffer phải được kích hoạt TRƯỚC khi model binding đọc, không phải trong filter. Unit test dùng `MemoryStream` tự tạo (seekable, position luôn ở 0) nên KHÔNG catch được bug này — chỉ lộ ra khi test qua HTTP request thật (Kestrel network stream).
+**Cách xử lý:** KHÔNG đọc lại raw `Request.Body` trong filter. Thay vào đó, lấy object đã được Minimal API bind sẵn qua `context.Arguments` (kiểu `EndpointFilterInvocationContext`, ví dụ `context.Arguments[0]`), rồi serialize lại thành JSON (`JsonSerializer.Serialize(context.Arguments[0], options)`) nếu cần dạng chuỗi để log/lưu DB.
+**Lần đầu gặp:** WF-FEATURE `api-request-log` (STEP-2.1 code, STEP-3.1 UXR phát hiện bug UI-001, STEP fix commit `ae2a211`) — feature ghi log request AddDevice/LaunchApp API.
+**Không cần làm lại:** Không cần thử `EnableBuffering()` sớm hơn trong middleware pipeline riêng — cách đó phức tạp hơn không cần thiết khi endpoint đã bind sẵn object; không cần viết unit test bằng `MemoryStream` để verify hành vi đọc body qua network — nó sẽ luôn pass giả (false positive), phải test qua HTTP request thật (curl/integration test qua `TestServer`/Kestrel).
 
 ---
 
