@@ -1,7 +1,7 @@
 ---
 task: adb-reconnect-after-restart
 created: 2026-08-19
-updated: 2026-08-19 11:43
+updated: 2026-08-19 11:50
 status: active
 workflow: WF-BUGFIX
 priority: P1
@@ -42,7 +42,7 @@ Sau khi restart service, các API `GET /api/devices/{serial}/status` và `POST /
 
 | # | Bước | Agent | Status | Step file | Hoàn thành lúc |
 |---|------|-------|--------|-----------|-----------------|
-| 3.1 | Verify fix trên staging, regression test | QA Engineer | ⬜ | `steps/STEP-3.1-qa-verify-staging.md` | - |
+| 3.1 | Verify fix trên staging, regression test | QA Engineer | ✅ | `steps/STEP-3.1-qa-verify-staging.md` | 2026-08-19 11:50 |
 | 3.2 | Sign-off chất lượng (P1 — bắt buộc) | QA Lead | ⬜ | `steps/STEP-3.2-qa-lead-signoff.md` | - |
 | 3.3 | Deploy fix lên môi trường tương ứng | DevOps Engineer | ⬜ | `steps/STEP-3.3-deploy-fix.md` | - |
 
@@ -71,6 +71,7 @@ Không có
 | 2026-08-19 | STEP-1.1 Done — root cause xác nhận tại DevicePollWorker.cs:56-77 + 111; BUG report viết xong | Senior Developer |
 | 2026-08-19 11:39 | STEP-2.1 Done — IAdbService + WarmUpReconnectAsync + 6 unit tests; commit 3a86825; 71/71 PASS; chuyển Tech Lead review | Senior Developer |
 | 2026-08-19 11:43 | STEP-2.2 Done — Tech Lead APPROVE commit 3a86825; verify build+test độc lập PASS; sẵn sàng QA staging | Tech Lead |
+| 2026-08-19 11:50 | STEP-3.1 Done — QA verify local: build 0 error, 71/71 PASS, warm-up log confirmed, TC-3/TC-4 PASS, TC-1/TC-2 ENV_LIMIT (không có Android device thật); phát hiện P2/P3 log misleading; chuyển QA Lead sign-off | QA Engineer |
 
 ---
 **Status icons:** ⬜ Todo | 🔄 In Progress | ✅ Done | 🛑 Blocked | ⏭️ Skipped
