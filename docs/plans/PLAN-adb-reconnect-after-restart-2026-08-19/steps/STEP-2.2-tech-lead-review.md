@@ -71,8 +71,8 @@ Chạy lại `dotnet build src/KztekAdbPublishTool.Web/` → PASS 0 error/0 warn
 
 ## Commit
 
-- Hash: [điền sau commit review]
-- Đã push: chưa (sẽ commit sau khi hoàn thành review)
+- Hash: 52f0925
+- Đã push: rồi (origin/docker-deploy)
 
 ---
 **Status icons:** ⬜ Todo | 🔄 In Progress | ✅ Done | 🛑 Blocked | ⏭️ Skipped
