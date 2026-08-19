@@ -86,6 +86,44 @@
         el.scrollTop = el.scrollHeight;
     }
 
+    // ── API request log format (US-006 BR3) ─────────────────────────────────────
+    // Format: "[API] apiName param → result (HTTP status, durationMs) from caller"
+    // Ví dụ:  "[API] AddDevice ip=192.168.1.10:5555 → Success (200, 47ms) from 10.0.0.15"
+    //         "[API] LaunchApp serial=R58N7XX, app=com.kztek.demo → Unauthorized (401, 3ms) from 10.0.0.9"
+    function formatApiRequestLog(entry) {
+        if (!entry) return '[API] (empty log entry)';
+        var paramStr = summarizeParams(entry.apiName, entry.parameters);
+        var status = entry.httpStatusCode || '-';
+        var dur = (entry.durationMs != null ? entry.durationMs : 0) + 'ms';
+        var caller = entry.callerIp ? ('from ' + entry.callerIp) : '';
+        return '[API] ' + (entry.apiName || 'Unknown') + ' '
+             + paramStr + ' → ' + (entry.result || '-')
+             + ' (' + status + ', ' + dur + ') ' + caller;
+    }
+
+    // Tóm tắt parameters JSON thành text ngắn.
+    // Best-effort — nếu parse fail hoặc "invalid body" → hiển thị nguyên.
+    function summarizeParams(apiName, paramsJsonOrNull) {
+        if (!paramsJsonOrNull) return '(no body)';
+        if (paramsJsonOrNull === 'invalid body') return '(invalid body)';
+        try {
+            var p = JSON.parse(paramsJsonOrNull);
+            if (apiName === 'AddDevice') {
+                var ip = p.ip || p.Ip || '?';
+                var port = (p.port != null ? p.port : (p.Port != null ? p.Port : 5555));
+                return 'ip=' + ip + ':' + port;
+            }
+            if (apiName === 'LaunchApp') {
+                var serial = p.serial || p.Serial || '?';
+                var app = p.app || p.App || '?';
+                return 'serial=' + serial + ', app=' + app;
+            }
+            return paramsJsonOrNull;
+        } catch (_) {
+            return paramsJsonOrNull;
+        }
+    }
+
     // ── Device grid render (called by DevicesUpdated SignalR event) ───────────────
     function renderDevices(devices) {
         const tb = $id('device-tbody');
@@ -255,6 +293,11 @@
                 row.dataset.version = version || '';
             }
             appendLog('[' + serial + '] ' + (success ? 'Cài thành công — version: ' + version : 'Cài thất bại'));
+        });
+
+        // Server → client: API request log (feature api-request-log)
+        conn.on('ApiRequestLogged', function (entry) {
+            appendLog(formatApiRequestLog(entry));
         });
 
         // Connection lifecycle: start fallback when permanently closed
