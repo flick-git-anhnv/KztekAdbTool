@@ -90,7 +90,7 @@ Viết Technical Design Document chi tiết cho feature API Request Log. TDD ph�
   6. **CODE-GRAPH:** Senior Dev PHẢI cập nhật `code-graph/CODE-GRAPH.md` (bảng 2.2 Module Dependencies + 2.3 API Endpoints + 2.4 SignalR Events + lịch sử cập nhật) SAU khi merge STEP-2.1. Danh sách thay đổi bắt buộc trong TDD mục "Đảm bảo tương thích với CODE-GRAPH".
 
 ## Commit
-- Hash: [điền sau khi commit]
+- Hash: 1b73bca
 - Đã push: không (theo yêu cầu — Tech Lead không push, để Dispatcher/EM quyết định push khi phase phù hợp)
 
 ---

@@ -98,7 +98,7 @@ Không có
 | 2026-08-19 13:24 | STEP-1.2 Done — 6 User Stories + AC + DOCX, commit 6c77fa4 | Business Analyst |
 | 2026-08-19 13:26 | STEP-1.3 Done — RESOURCE plan tạo xong, P2 xác nhận, không conflict P1, commit 2ac134b | Engineering Manager |
 | 2026-08-19 13:31 | STEP-1.4 Done — Sprint plan 11 task, timeline 3 ngày, dependencies rõ, commit 641e49d | Project Manager |
-| 2026-08-19 13:38 | STEP-1.5 Done — TDD 12 sections, 12 decisions chốt (D1-D12), sẵn cho 2.1 ∥ 2.2 chạy song song, commit [pending] | Tech Lead |
+| 2026-08-19 13:38 | STEP-1.5 Done — TDD 12 sections, 12 decisions chốt (D1-D12), sẵn cho 2.1 ∥ 2.2 chạy song song, commit 1b73bca | Tech Lead |
 
 ---
 **Status icons:** ⬜ Todo | 🔄 In Progress | ✅ Done | 🛑 Blocked | ⏭️ Skipped
