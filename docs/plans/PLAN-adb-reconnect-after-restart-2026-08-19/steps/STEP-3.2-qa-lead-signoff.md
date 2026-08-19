@@ -128,8 +128,8 @@ TC-1 (`GET /api/devices/{serial}/status` trả 200 sau restart với device th�
 
 ## Commit
 
-- Hash: [điền sau khi commit]
-- Đã push: [có/không]
+- Hash: 29e3610
+- Đã push: có (origin/docker-deploy)
 
 ---
 **Status icons:** ⬜ Todo | 🔄 In Progress | ✅ Done | 🛑 Blocked | ⏭️ Skipped
