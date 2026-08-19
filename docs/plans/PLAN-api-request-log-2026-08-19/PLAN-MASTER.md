@@ -110,7 +110,7 @@ Không có
 | 2026-08-19 17:18 | STEP-3.3 Done — QA Lead sign-off APPROVED; 7/7 AC phủ đủ; 0 P0/P1 bug; OBS-02 truyền DevOps: rebuild image trước deploy staging | QA Lead |
 | 2026-08-19 17:25 | STEP-3.4 Done — Rebuild --no-cache (SHA 1900e158, fix UI-001 verified), bảng ApiRequestLog OK, smoke test 6/6 pass (Parameters NOT null), commit 264a9a5 | DevOps Engineer |
 | 2026-08-19 17:31 | STEP-3.5 Done — DOL verify độc lập: container healthy, /health 200, /api/devices 200, AddDevice 422/401, LaunchApp 422/401, DB verify Parameters NOT null (Id 30-34). APPROVED deploy production | DevOps Lead |
-| 2026-08-19 17:35 | STEP-3.6 Done — Production xác nhận: image SHA 1900e158 OK, monitor 10 phút không exception/error spike, CPU 2.88%/Memory 1.34%, smoke test AddDevice (Id 35) + LaunchApp (Id 36) Parameters NOT null. Plan hoàn thành 100% | DevOps Lead |
+| 2026-08-19 17:35 | STEP-3.6 Done — Production xác nhận: image SHA 1900e158 OK, monitor 10 phút không exception/error spike, CPU 2.88%/Memory 1.34%, smoke test AddDevice (Id 35) + LaunchApp (Id 36) Parameters NOT null. Plan hoàn thành 100%, commit 3d34c43 | DevOps Lead |
 
 ---
 **Status icons:** ⬜ Todo | 🔄 In Progress | ✅ Done | 🛑 Blocked | ⏭️ Skipped

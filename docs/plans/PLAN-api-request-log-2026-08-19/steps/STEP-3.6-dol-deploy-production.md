@@ -68,7 +68,7 @@ Deploy build đã verify lên production, apply EF migration, monitor app sau de
 - next_inputs: Không có — đây là bước cuối của plan
 
 ## Commit
-- Hash: [TBD — điền sau commit]
+- Hash: 3d34c43
 - Đã push: không
 
 ---
