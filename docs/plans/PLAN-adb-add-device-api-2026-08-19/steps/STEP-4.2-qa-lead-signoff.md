@@ -83,8 +83,8 @@ Lý do:
 - next_inputs: `docs/test-plans/TEST-PLAN-adb-add-device-api.md` mục NHOM B (danh sách 6 case cần smoke test với thiết bị thật). Ghi kết quả smoke test vào `docs/devops/DEPLOY-adb-add-device-api.md`.
 
 ## Commit
-- Hash:
-- Đã push:
+- Hash: e90d9d0
+- Đã push: Yes (docker-deploy → origin)
 
 ---
 **Status icons:** ⬜ Todo | 🔄 In Progress | ✅ Done | 🛑 Blocked | ⏭️ Skipped

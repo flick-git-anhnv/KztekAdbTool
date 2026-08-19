@@ -1,7 +1,7 @@
 ---
 task: adb-add-device-api
 created: 2026-08-19
-updated: 2026-08-19 10:46
+updated: 2026-08-19 17:20
 status: active
 workflow: WF-FEATURE
 priority: P1
@@ -65,7 +65,7 @@ Cả 2 API dùng lại đúng `ApiKeyEndpointFilter` + config `LaunchApp:ApiKey`
 | # | Bước | Agent | Status | Step file | Hoàn thành lúc |
 |---|------|-------|--------|-----------|-----------------|
 | 4.1 | Viết test plan, thực thi test case, log kết quả | QA Engineer | ✅ | `steps/STEP-4.1-qa-engineer-test.md` | 2026-08-19 10:46 |
-| 4.2 | Sign-off chất lượng (P1 — bắt buộc QA Lead) | QA Lead | ⬜ | `steps/STEP-4.2-qa-lead-signoff.md` | - |
+| 4.2 | Sign-off chất lượng (P1 — bắt buộc QA Lead) | QA Lead | ✅ | `steps/STEP-4.2-qa-lead-signoff.md` | 2026-08-19 17:20 |
 | 4.3 | Deploy lên môi trường tương ứng | DevOps Engineer | ⬜ | `steps/STEP-4.3-devops-engineer-deploy.md` | - |
 | 4.4 | Approve staging, verify smoke test, approve + deploy production | DevOps Lead | ⬜ | `steps/STEP-4.4-devops-lead-approve.md` | - |
 
@@ -105,6 +105,7 @@ Không có
 | 2026-08-19 16:30 | STEP-3.1 Done — DeviceConnectionEndpoints.cs tạo xong 2 endpoint, ValidateConnectInput public static, Program.cs đăng ký, 22 unit test mới (64/64 PASS), CODE-GRAPH cập nhật, commit 3c5541b đã push. | Senior Developer |
 | 2026-08-19 17:05 | STEP-3.2 Done — Code review APPROVE (13/13 checklist TDD Pass). verify-pr: 4 PASS + 1 SKIP (lint). security-audit-stride: OWASP 7 Pass + 3 N-A + 0 Fail; STRIDE 4 Pass + 1 N-A + 1 FYI (DoS optional, không blocker). Không escalate CTO. **Phase 3 hoàn thành.** Chuyển tiếp Phase 4 QA. | Tech Lead |
 | 2026-08-19 10:46 | STEP-4.1 Done — TEST-PLAN + TC viết xong. Thực thi 19/19 PASS (NHOM A, HTTP thật, app local port 5299). 6 case NHOM B cần smoke test thủ công tại staging. DOCX xuất OK (PDF skip). Commit b77dff4 đã push. | QA Engineer |
+| 2026-08-19 17:20 | STEP-4.2 Done — QA Lead sign-off PASS CÓ ĐIỀU KIỆN. P0=0, P1=0. Điều kiện: DevOps PHẢI smoke test TC-C01–TC-C06 (NHOM B) trên thiết bị Android thật tại staging trước go-live production. Commit e90d9d0 đã push. | QA Lead |
 
 ---
 **Status icons:** ⬜ Todo | 🔄 In Progress | ✅ Done | 🛑 Blocked | ⏭️ Skipped
