@@ -84,7 +84,7 @@ Verify staging environment sau deploy, thực hiện smoke test độc lập (kh
 - next_inputs: Staging APPROVED; staging URL `http://localhost:3339`; image SHA `sha256:1900e1588f4dea6c759c189dbf61a82db967210359de8d87557aedd826f01365`; `docs/devops/DEPLOY-api-request-log.md` (DOE checklist); quyết định DOL: deploy production, không rebuild lại image.
 
 ## Commit
-- Hash: [điền sau khi commit]
+- Hash: 104c1eb
 - Đã push: không
 
 ---
