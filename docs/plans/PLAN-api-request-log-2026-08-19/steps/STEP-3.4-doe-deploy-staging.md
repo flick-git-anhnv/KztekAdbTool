@@ -68,7 +68,7 @@ Deploy build mới lên môi trường staging, đảm bảo bảng `ApiRequestL
 - next_inputs: Staging URL `http://localhost:3339`; API key `sup3rsecr3tap1key@`; `docs/devops/DEPLOY-api-request-log.md` (kết quả smoke test đầy đủ); image SHA `sha256:1900e1588f4dea6c759c189dbf61a82db967210359de8d87557aedd826f01365`.
 
 ## Commit
-- Hash: [điền sau khi commit]
+- Hash: 264a9a5
 - Đã push: không
 
 ---
