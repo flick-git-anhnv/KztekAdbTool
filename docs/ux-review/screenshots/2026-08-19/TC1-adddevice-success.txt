@@ -1,0 +1,14 @@
+=== TC-1: AddDevice API — valid API key, success (HTTP 200) ===
+Request:
+  POST http://localhost:3339/api/devices/connect-by-ip
+  Header: x-api-key: sup3rsecr3tap1key@
+  Body: {"ip":"192.168.21.11","port":5555}
+
+Response:
+  HTTP 200
+  {"success":true,"message":"Device connected.","serial":"192.168.21.11:5555","exitCode":0,"stdOut":"already connected to 192.168.21.11:5555\n"}
+
+DB entry (ApiRequestLog):
+  Id=1 | 2026-08-19T07:05:06 | AddDevice | HTTP 200 | Success | from 192.168.48.1 | 68ms | params=null
+
+RESULT: Log entry created correctly EXCEPT Parameters field is null (bug)

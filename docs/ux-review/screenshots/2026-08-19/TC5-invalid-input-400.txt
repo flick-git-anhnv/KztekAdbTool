@@ -1,0 +1,9 @@
+=== TC-5: AddDevice API — invalid IP (spaces) → 400 ===
+Request:
+  POST http://localhost:3339/api/devices/connect-by-ip
+  Header: x-api-key: sup3rsecr3tap1key@
+  Body: {"ip":"bad ip with spaces","port":5555}
+Response: HTTP 400 {"success":false,"error":"InvalidInput","message":"ip không được chứa khoảng trắng"}
+
+DB entry: Id=5 | AddDevice | HTTP 400 | Failure | 1ms | params=null
+RESULT: 400 failure logged correctly.

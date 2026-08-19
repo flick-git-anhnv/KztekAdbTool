@@ -1,0 +1,7 @@
+ApiRequestLog total entries: 5
+==========================================================================================
+Id=1 | 2026-08-19T07:05:06 | AddDevice    | HTTP 200 | Success         | from 192.168.48.1       | 68ms | params=None
+Id=2 | 2026-08-19T07:05:36 | LaunchApp    | HTTP 422 | Failure         | from 192.168.48.1       | 91ms | params=None
+Id=3 | 2026-08-19T07:05:37 | AddDevice    | HTTP 401 | Unauthorized    | from 192.168.48.1       | 1ms | params=None
+Id=4 | 2026-08-19T07:05:38 | LaunchApp    | HTTP 401 | Unauthorized    | from 192.168.48.1       | 0ms | params=None
+Id=5 | 2026-08-19T07:05:39 | AddDevice    | HTTP 400 | Failure         | from 192.168.48.1       | 1ms | params=None

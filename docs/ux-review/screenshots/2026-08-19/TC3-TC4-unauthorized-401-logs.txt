@@ -1,0 +1,16 @@
+=== TC-3: AddDevice API — wrong API key → 401 (OUTER filter design test) ===
+Request:
+  POST http://localhost:3339/api/devices/connect-by-ip
+  Header: x-api-key: WRONGKEY
+  Body: {"ip":"10.0.0.99","port":5555}
+Response: HTTP 401 {"success":false,"error":"Unauthorized",...}
+
+DB entry: Id=3 | AddDevice | HTTP 401 | Unauthorized | 1ms | params=null
+RESULT: 401 IS logged (OUTER filter working as designed) — PASS
+
+=== TC-4: LaunchApp API — no API key → 401 ===
+Request: POST http://localhost:3339/api/launch-app (no x-api-key)
+Response: HTTP 401 {"success":false,"error":"Unauthorized",...}
+
+DB entry: Id=4 | LaunchApp | HTTP 401 | Unauthorized | 0ms | params=null
+RESULT: 401 IS logged — PASS

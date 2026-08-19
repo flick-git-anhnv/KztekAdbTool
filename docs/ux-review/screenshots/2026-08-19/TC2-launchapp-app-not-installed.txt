@@ -1,0 +1,14 @@
+=== TC-2: LaunchApp API — valid key, app not installed (HTTP 422 Failure) ===
+Request:
+  POST http://localhost:3339/api/launch-app
+  Header: x-api-key: sup3rsecr3tap1key@
+  Body: {"serial":"192.168.21.11:5555","app":"com.kztek.testapp.notexist"}
+
+Response:
+  HTTP 422
+  {"success":false,"error":"AppNotInstalled","message":"No activities found to run",...}
+
+DB entry (ApiRequestLog):
+  Id=2 | 2026-08-19T07:05:36 | LaunchApp | HTTP 422 | Failure | from 192.168.48.1 | 91ms | params=null
+
+RESULT: Log entry created correctly, failure case logged. Parameters null (same bug).
