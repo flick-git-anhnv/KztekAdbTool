@@ -1,7 +1,7 @@
 ---
 task: api-request-log
 created: 2026-08-19
-updated: 2026-08-19 17:25
+updated: 2026-08-19 17:31
 status: active
 workflow: WF-FEATURE
 priority: P2
@@ -58,7 +58,7 @@ Thêm tính năng ghi lịch sử mỗi request gọi vào 2 API mới có ApiKe
 | 3.2 | Test execution: gọi 2 API, kiểm tra logging/SignalR real-time/DB persistence/panel display | QA Engineer | ✅ | `steps/STEP-3.2-qae-test.md` | 2026-08-19 17:13 |
 | 3.3 | Sign-off chất lượng, veto nếu còn P0/P1 bug | QA Lead | ✅ | `steps/STEP-3.3-qal-signoff.md` | 2026-08-19 17:18 |
 | 3.4 | Deploy staging (docker-compose), verify migration apply thành công | DevOps Engineer | ✅ | `steps/STEP-3.4-doe-deploy-staging.md` | 2026-08-19 17:25 |
-| 3.5 | Approve staging + smoke test, cấp phép deploy production | DevOps Lead | ⬜ | `steps/STEP-3.5-dol-approve-staging.md` | - |
+| 3.5 | Approve staging + smoke test, cấp phép deploy production | DevOps Lead | ✅ | `steps/STEP-3.5-dol-approve-staging.md` | 2026-08-19 17:31 |
 | 3.6 | Approve + deploy production + monitor | DevOps Lead | ⬜ | `steps/STEP-3.6-dol-deploy-production.md` | - |
 
 ## Artifacts dự kiến (tổng)
@@ -109,6 +109,7 @@ Không có
 | 2026-08-19 17:13 | STEP-3.2 Done — 13/13 TC PASS (AddDevice+LaunchApp success/400/401/422, concurrent, DB persistence, UI-001 retest); rebuild image cần thiết (ae2a211 không có trong UXR image); 0 bug open; commit ac817b0 | QA Engineer |
 | 2026-08-19 17:18 | STEP-3.3 Done — QA Lead sign-off APPROVED; 7/7 AC phủ đủ; 0 P0/P1 bug; OBS-02 truyền DevOps: rebuild image trước deploy staging | QA Lead |
 | 2026-08-19 17:25 | STEP-3.4 Done — Rebuild --no-cache (SHA 1900e158, fix UI-001 verified), bảng ApiRequestLog OK, smoke test 6/6 pass (Parameters NOT null), commit 264a9a5 | DevOps Engineer |
+| 2026-08-19 17:31 | STEP-3.5 Done — DOL verify độc lập: container healthy, /health 200, /api/devices 200, AddDevice 422/401, LaunchApp 422/401, DB verify Parameters NOT null (Id 30-34). APPROVED deploy production | DevOps Lead |
 
 ---
 **Status icons:** ⬜ Todo | 🔄 In Progress | ✅ Done | 🛑 Blocked | ⏭️ Skipped
