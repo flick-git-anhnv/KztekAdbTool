@@ -152,3 +152,35 @@ private async Task WarmUpReconnectAsync(CancellationToken ct)
 - Fix plan: `docs/plans/PLAN-adb-reconnect-after-restart-2026-08-19/`
 - Fix sẽ thực hiện tại: `steps/STEP-2.1-fix-auto-reconnect.md`
 - TDD gốc của feature: `docs/tech-design/TDD-adb-add-device-api.md` (nếu có)
+
+---
+
+## Sign-off — QA Lead
+
+**Ngày:** 2026-08-19 12:17
+**QA Lead:** trongtv@kztek.vn
+**Quyết định:** PASS CÓ ĐIỀU KIỆN
+
+### Tóm tắt đánh giá
+
+Hai bug P1 đã được fix và verify:
+- **Bug 1** (warm-up không được gọi sau restart) — fix commit `3a86825`, verified qua log app thật (TC-5) + 9/9 warm-up unit test PASS.
+- **Bug 2** (per-device timeout chặn device sau) — fix commit `cff893f`, verified qua log TC-5: cả 2 WiFi device offline đều được thử warm-up độc lập, không bị block lẫn nhau.
+
+Không có P0/P1 bug nào còn mở. 73/73 unit test PASS. Regression TC-3/TC-4 PASS.
+
+### Điều kiện trước khi production deploy được coi là an toàn hoàn toàn
+
+> **ĐIỀU KIỆN BẮT BUỘC:** DevOps Engineer thực hiện smoke test trên staging với ≥1 Android WiFi device thật:
+> - **TC-1:** Restart service → KHÔNG scan UI → `GET /api/devices/{serial}/status` → kỳ vọng 200 OK.
+> - **TC-2:** Restart service → KHÔNG scan UI → `POST /api/devices/connect-by-ip` → kỳ vọng 200 OK.
+> - Nếu không có thiết bị trong cửa sổ deploy → DevOps Lead chấp nhận rủi ro còn lại bằng văn bản tại STEP-3.3.
+
+### Phê duyệt
+
+- [x] P0 = 0
+- [x] P1 = 0 (trong phạm vi môi trường verify được)
+- [x] Regression sạch (TC-3/TC-4/73 unit tests)
+- [ ] TC-1/TC-2 E2E với thiết bị thật — ENV_LIMIT, giao DevOps Engineer verify trên staging
+
+**Approved for staging deploy. Điều kiện TC-1/TC-2 phải hoàn thành hoặc được DevOps Lead chấp nhận rủi ro trước khi production final.**

@@ -1,7 +1,7 @@
 ---
 task: adb-reconnect-after-restart
 created: 2026-08-19
-updated: 2026-08-19 12:13
+updated: 2026-08-19 12:17
 status: active
 workflow: WF-BUGFIX
 priority: P1
@@ -46,7 +46,7 @@ Sau khi restart service, các API `GET /api/devices/{serial}/status` và `POST /
 |---|------|-------|--------|-----------|-----------------|
 | 3.1 | Verify fix trên staging, regression test | QA Engineer | ✅ | `steps/STEP-3.1-qa-verify-staging.md` | 2026-08-19 11:50 |
 | 3.1b | Re-verify sau fix 2.3 — xác nhận nhiều WiFi device offline không còn chặn nhau | QA Engineer | ✅ | `steps/STEP-3.1b-qa-reverify.md` | 2026-08-19 12:13 |
-| 3.2 | Sign-off chất lượng (P1 — bắt buộc) | QA Lead | ⬜ | `steps/STEP-3.2-qa-lead-signoff.md` | - |
+| 3.2 | Sign-off chất lượng (P1 — bắt buộc) | QA Lead | ✅ | `steps/STEP-3.2-qa-lead-signoff.md` | 2026-08-19 12:17 |
 | 3.3 | Deploy fix lên môi trường tương ứng | DevOps Engineer | ⬜ | `steps/STEP-3.3-deploy-fix.md` | - |
 
 ## Artifacts dự kiến (tổng)
@@ -79,6 +79,7 @@ Không có
 | 2026-08-19 12:03 | STEP-2.3 Done — fix RunAsync re-throw OCE khi ct cancel; WarmUpReconnectAsync phân biệt timeout vs shutdown; 2 test mới; 73/73 PASS; commit cff893f; chuyển Tech Lead review lại (2.4) | Senior Developer |
 | 2026-08-19 12:08 | STEP-2.4 Done — Tech Lead APPROVE commit cff893f; verify độc lập build 0 error + 73/73 test PASS; đọc diff xác nhận `ct.ThrowIfCancellationRequested()` đúng chỗ, 2 test mới không "fake pass", không regression; chuyển QA Engineer re-verify (3.1b) | Tech Lead |
 | 2026-08-19 12:13 | STEP-3.1b Done — QA re-verify: TC-5 PASS (log xác nhận cả 2 WiFi device offline đều được thử warm-up, device 1 timeout không chặn device 2); 73/73 unit test PASS + 9/9 warm-up test PASS; TC-3/TC-4 regression PASS; TC-1/TC-2 ENV_LIMIT (giới hạn đã biết); không P0/P1 mới; chuyển QA Lead sign-off (3.2) | QA Engineer |
+| 2026-08-19 12:17 | STEP-3.2 Done — QA Lead sign-off PASS CÓ ĐIỀU KIỆN: cả 2 bug P1 verified fix (log TC-5 + 73/73 unit test), không P0/P1 còn mở; điều kiện: DevOps Engineer smoke test TC-1/TC-2 với ≥1 Android device thật trên staging trước production final (hoặc DevOps Lead chấp nhận rủi ro bằng văn bản); approved staging deploy | QA Lead |
 
 ---
 **Status icons:** ⬜ Todo | 🔄 In Progress | ✅ Done | 🛑 Blocked | ⏭️ Skipped
