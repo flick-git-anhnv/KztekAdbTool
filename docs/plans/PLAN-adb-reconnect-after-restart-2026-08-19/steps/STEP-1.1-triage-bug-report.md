@@ -56,8 +56,8 @@ deps: []
 
 ## Commit
 
-- Hash: [điền sau khi commit]
-- Đã push: [có/không]
+- Hash: 7d88826
+- Đã push: có (docker-deploy)
 
 ---
 **Status icons:** ⬜ Todo | 🔄 In Progress | ✅ Done | 🛑 Blocked | ⏭️ Skipped
