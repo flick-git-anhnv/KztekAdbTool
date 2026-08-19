@@ -166,8 +166,8 @@ TC-4 Kết quả: PASS — `HT7A21USBTEST02` (không có `:`) bị lọc khỏi 
 
 ## Commit
 
-- Hash: (điền sau commit)
-- Đã push: (điền sau push)
+- Hash: 49a781c
+- Đã push: có (origin/docker-deploy)
 
 ---
 **Status icons:** ⬜ Todo | 🔄 In Progress | ✅ Done | 🛑 Blocked | ⏭️ Skipped
