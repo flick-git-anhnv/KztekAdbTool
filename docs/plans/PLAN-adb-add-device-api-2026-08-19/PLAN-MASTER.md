@@ -1,7 +1,7 @@
 ---
 task: adb-add-device-api
 created: 2026-08-19
-updated: 2026-08-19 10:18
+updated: 2026-08-19 10:35
 status: active
 workflow: WF-FEATURE
 priority: P1
@@ -51,7 +51,7 @@ Cả 2 API dùng lại đúng `ApiKeyEndpointFilter` + config `LaunchApp:ApiKey`
 
 | # | Bước | Agent | Status | Step file | Hoàn thành lúc |
 |---|------|-------|--------|-----------|-----------------|
-| 2.1 | Viết TDD: API contract 2 endpoint, routing design, reuse strategy (AdbService.ConnectAsync + DeviceState), error handling | Tech Lead | ⬜ | `steps/STEP-2.1-tech-lead-tdd.md` | - |
+| 2.1 | Viết TDD: API contract 2 endpoint, routing design, reuse strategy (AdbService.ConnectAsync + DeviceState), error handling | Tech Lead | ✅ | `steps/STEP-2.1-tech-lead-tdd.md` | 2026-08-19 10:35 |
 
 ### Phase 3: Phát triển
 
@@ -101,6 +101,7 @@ Không có
 | 2026-08-19 10:13 | STEP-1.2 Done — US viết xong 14 scenario, DOCX xuất, commit b7e9709 | Business Analyst |
 | 2026-08-19 10:16 | STEP-1.3 Done — RESOURCE estimate ~5-8h, Senior Developer phân bổ, P1 xác nhận, commit 788a0f9 | Engineering Manager |
 | 2026-08-19 10:18 | STEP-1.4 Done — Sprint plan viết xong, DOCX xuất, commit 5992455. **Phase 1 hoàn thành toàn bộ (1.1–1.4 Done).** Status plan: planning → active | Project Manager |
+| 2026-08-19 10:35 | STEP-2.1 Done — TDD viết xong, chốt Q1-Q7, DOCX xuất (PDF skip do thiếu xelatex). Quyết định: serial trong response API 1 = "ip:port", 404 cho serial NotFound API 2, trigger poll sau connect, không escalate CTO. **Phase 2 hoàn thành.** | Tech Lead |
 
 ---
 **Status icons:** ⬜ Todo | 🔄 In Progress | ✅ Done | 🛑 Blocked | ⏭️ Skipped
