@@ -33,8 +33,10 @@ public sealed class ApiRequestLoggingEndpointFilter : IEndpointFilter
         var path    = http.Request.Path.Value ?? string.Empty;
         var apiName = ResolveApiName(path);
 
-        // Đọc body trước khi vào chain (EnableBuffering + rewind) — bắt được Parameters kể cả khi 401
-        string? parametersJson = await TryReadBodyJsonAsync(http, http.RequestAborted);
+        // Root cause UI-001: Trong Minimal API, model binding chạy TRƯỚC filter chain.
+        // Lúc này http.Request.Body đã bị consumed → đọc stream chỉ trả empty string.
+        // Fix: serialize argument đã bound từ context.Arguments thay vì đọc raw stream.
+        string? parametersJson = TryExtractParametersJson(context);
 
         var callerIp = ResolveCallerIp(http);
 
@@ -112,32 +114,39 @@ public sealed class ApiRequestLoggingEndpointFilter : IEndpointFilter
         return http.Connection.RemoteIpAddress?.ToString() ?? "unknown";
     }
 
-    private static async Task<string?> TryReadBodyJsonAsync(HttpContext http, CancellationToken ct)
+    // Options dùng chung — tránh allocate mới mỗi request
+    private static readonly System.Text.Json.JsonSerializerOptions CamelCaseOptions = new()
+    {
+        PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
+    };
+
+    /// <summary>
+    /// Trích xuất tham số request bằng cách serialize argument đã được model-bound
+    /// từ <see cref="EndpointFilterInvocationContext.Arguments"/>.
+    /// <para>
+    /// WHY: Trong Minimal API, model binding (ReadFromJsonAsync) xảy ra TRƯỚC khi
+    /// filter chain chạy — http.Request.Body đã ở EOF khi filter được gọi. Đọc stream
+    /// trực tiếp (EnableBuffering + ReadToEndAsync) chỉ trả empty string, dẫn đến
+    /// Parameters = null (bug UI-001). Thay vào đó, serialize Arguments[0] vốn là
+    /// bound object đã có sẵn.
+    /// </para>
+    /// </summary>
+    private static string? TryExtractParametersJson(EndpointFilterInvocationContext context)
     {
         try
         {
-            http.Request.EnableBuffering();
-            using var reader = new StreamReader(
-                http.Request.Body,
-                encoding: System.Text.Encoding.UTF8,
-                detectEncodingFromByteOrderMarks: false,
-                bufferSize: 1024,
-                leaveOpen: true);
-            var body = await reader.ReadToEndAsync(ct);
-            http.Request.Body.Position = 0;   // rewind để handler đọc lại được
+            if (context.Arguments.Count == 0) return null;
 
-            if (string.IsNullOrWhiteSpace(body)) return null;
+            var firstArg = context.Arguments[0];
+            if (firstArg is null) return null;
 
-            // Validate JSON hợp lệ — nếu không parse được, ghi "invalid body" thay vì rác
-            try
-            {
-                _ = System.Text.Json.JsonDocument.Parse(body);
-                return body;
-            }
-            catch
-            {
-                return "invalid body";
-            }
+            // Bỏ qua các framework/system type — chỉ serialize application request model
+            var t = firstArg.GetType();
+            if (firstArg is HttpContext or CancellationToken) return null;
+            if (t.Namespace?.StartsWith("Microsoft", StringComparison.Ordinal) == true) return null;
+            if (t.Namespace?.StartsWith("System", StringComparison.Ordinal) == true) return null;
+
+            return System.Text.Json.JsonSerializer.Serialize(firstArg, t, CamelCaseOptions);
         }
         catch
         {

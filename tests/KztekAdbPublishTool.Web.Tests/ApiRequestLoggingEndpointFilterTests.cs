@@ -181,4 +181,35 @@ public sealed class ApiRequestLoggingEndpointFilterTests
 
         Assert.True(spy.CapturedEntry!.DurationMs >= 0);
     }
+
+    // ── Test 8: Regression UI-001 — Parameters không null khi có bound argument ──
+    // Reproduce production bug: Minimal API model-binds request body TRƯỚC khi filter
+    // chain chạy → http.Request.Body đã bị consumed (EOF) khi filter đọc.
+    // Fix: serialize context.Arguments[0] thay vì đọc raw body stream.
+    [Fact]
+    public async Task InvokeAsync_WithBoundArgument_ExtractsParametersFromArguments()
+    {
+        // Arrange: body stream RỖNG (simulate stream đã consumed bởi model binding)
+        // nhưng context.Arguments[0] là object đã bound — đúng như production.
+        var spy    = new SpyLogService();
+        var filter = new ApiRequestLoggingEndpointFilter(
+            spy, NullLogger<ApiRequestLoggingEndpointFilter>.Instance);
+
+        var httpContext = new DefaultHttpContext();
+        httpContext.Request.Method = "POST";
+        httpContext.Request.Path   = new PathString("/api/devices/connect-by-ip");
+        httpContext.Request.Body   = new MemoryStream(); // rỗng — consumed by model binding
+
+        // context.Arguments[0] = bound request object (như Minimal API chuẩn bị trước filter)
+        var boundRequest = new ConnectByIpRequest { Ip = "192.168.21.11", Port = 5555 };
+        var ctx = EndpointFilterInvocationContext.Create<ConnectByIpRequest>(httpContext, boundRequest);
+
+        // Act
+        await filter.InvokeAsync(ctx, NextReturning(Results.Ok(new { success = true })));
+
+        // Assert
+        Assert.NotNull(spy.CapturedEntry!.Parameters);                    // không còn null
+        Assert.Contains("192.168.21.11", spy.CapturedEntry.Parameters);   // IP đúng
+        Assert.Contains("5555", spy.CapturedEntry.Parameters);            // Port đúng
+    }
 }
