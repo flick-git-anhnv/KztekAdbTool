@@ -1,7 +1,7 @@
 ---
 task: adb-add-device-api
 created: 2026-08-19
-updated: 2026-08-19 10:35
+updated: 2026-08-19 16:30
 status: active
 workflow: WF-FEATURE
 priority: P1
@@ -57,7 +57,7 @@ Cả 2 API dùng lại đúng `ApiKeyEndpointFilter` + config `LaunchApp:ApiKey`
 
 | # | Bước | Agent | Status | Step file | Hoàn thành lúc |
 |---|------|-------|--------|-----------|-----------------|
-| 3.1 | Code 2 endpoint mới, unit test, cập nhật CODE-GRAPH | Senior Developer | ⬜ | `steps/STEP-3.1-senior-developer-code.md` | - |
+| 3.1 | Code 2 endpoint mới, unit test, cập nhật CODE-GRAPH | Senior Developer | ✅ | `steps/STEP-3.1-senior-developer-code.md` | 2026-08-19 16:30 |
 | 3.2 | Code review, security-audit-stride (bắt buộc vì đụng auth + kết nối thiết bị), quyết định merge | Tech Lead | ⬜ | `steps/STEP-3.2-tech-lead-review.md` | - |
 
 ### Phase 4: Kiểm thử & Deploy
@@ -102,6 +102,7 @@ Không có
 | 2026-08-19 10:16 | STEP-1.3 Done — RESOURCE estimate ~5-8h, Senior Developer phân bổ, P1 xác nhận, commit 788a0f9 | Engineering Manager |
 | 2026-08-19 10:18 | STEP-1.4 Done — Sprint plan viết xong, DOCX xuất, commit 5992455. **Phase 1 hoàn thành toàn bộ (1.1–1.4 Done).** Status plan: planning → active | Project Manager |
 | 2026-08-19 10:35 | STEP-2.1 Done — TDD viết xong, chốt Q1-Q7, DOCX xuất (PDF skip do thiếu xelatex). Quyết định: serial trong response API 1 = "ip:port", 404 cho serial NotFound API 2, trigger poll sau connect, không escalate CTO. **Phase 2 hoàn thành.** | Tech Lead |
+| 2026-08-19 16:30 | STEP-3.1 Done — DeviceConnectionEndpoints.cs tạo xong 2 endpoint, ValidateConnectInput public static, Program.cs đăng ký, 22 unit test mới (64/64 PASS), CODE-GRAPH cập nhật, commit 3c5541b đã push. | Senior Developer |
 
 ---
 **Status icons:** ⬜ Todo | 🔄 In Progress | ✅ Done | 🛑 Blocked | ⏭️ Skipped
