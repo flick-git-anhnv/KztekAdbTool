@@ -1,7 +1,7 @@
 ---
 task: api-request-log
 created: 2026-08-19
-updated: 2026-08-19 13:55
+updated: 2026-08-19 14:12
 status: active
 workflow: WF-FEATURE
 priority: P2
@@ -54,7 +54,7 @@ Thêm tính năng ghi lịch sử mỗi request gọi vào 2 API mới có ApiKe
 
 | # | Bước | Agent | Status | Step file | Hoàn thành lúc |
 |---|------|-------|--------|-----------|-----------------|
-| 3.1 | UXR: chạy app thật, gọi API, verify log entries xuất hiện đúng trong panel `#log` (JS layer có thay đổi) | UX/UI Reviewer | ⬜ | `steps/STEP-3.1-uxr-review.md` | - |
+| 3.1 | UXR: chạy app thật, gọi API, verify log entries xuất hiện đúng trong panel `#log` (JS layer có thay đổi) | UX/UI Reviewer | ✅ | `steps/STEP-3.1-uxr-review.md` | 2026-08-19 14:12 |
 | 3.2 | Test execution: gọi 2 API, kiểm tra logging/SignalR real-time/DB persistence/panel display | QA Engineer | ⬜ | `steps/STEP-3.2-qae-test.md` | - |
 | 3.3 | Sign-off chất lượng, veto nếu còn P0/P1 bug | QA Lead | ⬜ | `steps/STEP-3.3-qal-signoff.md` | - |
 | 3.4 | Deploy staging (docker-compose), verify migration apply thành công | DevOps Engineer | ⬜ | `steps/STEP-3.4-doe-deploy-staging.md` | - |
@@ -103,6 +103,7 @@ Không có
 | 2026-08-19 13:42 | STEP-2.2 Done — JS handler ApiRequestLogged trong dashboard.js (+43 dòng), deviation đúng theo TDD (dashboard.js không phải signalr-client.js), syntax OK, commit d8abe37 | Junior Developer |
 | 2026-08-19 13:55 | STEP-2.3 Done — Code review PASS 12 hạng mục vs TDD, build 0/0, test 84/84 pass, APPROVED cả 2 PR (79ae3cf backend + d8abe37 frontend), không có code change từ TL | Tech Lead |
 | 2026-08-19 13:55 | STEP-2.4 Skipped — KHÔNG chạy STRIDE (không đụng auth/payment, DB schema chỉ INSERT parameterized, dữ liệu log không nhạy cảm, XSS-safe qua textContent); ghi backlog: cap body size 8KB ở filter khi go public | Tech Lead |
+| 2026-08-19 14:12 | STEP-3.1 Done — UXR pass 6/7 criteria (C3 Fail: UI-001 High — Parameters null); 5 TC chạy xong; rebuild image cần thiết trước test; commit 345792c | UX/UI Reviewer |
 
 ---
 **Status icons:** ⬜ Todo | 🔄 In Progress | ✅ Done | 🛑 Blocked | ⏭️ Skipped
