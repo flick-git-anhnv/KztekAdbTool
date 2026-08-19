@@ -1,7 +1,7 @@
 ---
 task: adb-reconnect-after-restart
 created: 2026-08-19
-updated: 2026-08-19 11:39
+updated: 2026-08-19 11:43
 status: active
 workflow: WF-BUGFIX
 priority: P1
@@ -36,7 +36,7 @@ Sau khi restart service, các API `GET /api/devices/{serial}/status` và `POST /
 | # | Bước | Agent | Status | Step file | Hoàn thành lúc |
 |---|------|-------|--------|-----------|-----------------|
 | 2.1 | Viết fix auto-reconnect sau restart, tạo PR | Senior Developer | ✅ | `steps/STEP-2.1-fix-auto-reconnect.md` | 2026-08-19 11:39 |
-| 2.2 | Code review PR (yêu cầu /verify-pr report trước) | Tech Lead | ⬜ | `steps/STEP-2.2-tech-lead-review.md` | - |
+| 2.2 | Code review PR (yêu cầu /verify-pr report trước) | Tech Lead | ✅ | `steps/STEP-2.2-tech-lead-review.md` | 2026-08-19 11:43 |
 
 ### Phase 3: Verify & Deploy
 
@@ -70,6 +70,7 @@ Không có
 | 2026-08-19 | Plan tạo mới | task-planner |
 | 2026-08-19 | STEP-1.1 Done — root cause xác nhận tại DevicePollWorker.cs:56-77 + 111; BUG report viết xong | Senior Developer |
 | 2026-08-19 11:39 | STEP-2.1 Done — IAdbService + WarmUpReconnectAsync + 6 unit tests; commit 3a86825; 71/71 PASS; chuyển Tech Lead review | Senior Developer |
+| 2026-08-19 11:43 | STEP-2.2 Done — Tech Lead APPROVE commit 3a86825; verify build+test độc lập PASS; sẵn sàng QA staging | Tech Lead |
 
 ---
 **Status icons:** ⬜ Todo | 🔄 In Progress | ✅ Done | 🛑 Blocked | ⏭️ Skipped
