@@ -51,8 +51,8 @@ Approve staging nếu evidence đủ. KHÔNG tự approve production nếu còn 
 - next_inputs: User tự thực hiện: (1) cập nhật API key thật, (2) build image, (3) chạy TC-C01–TC-C06 với thiết bị Android thật, (4) nếu PASS mới go-live production. Xem `docs/devops/DEPLOY-adb-add-device-api.md` mục 8 (Bàn giao) cho hướng dẫn chi tiết.
 
 ## Commit
-- Hash:
-- Đã push:
+- Hash: e0f6ef6
+- Đã push: Yes — docker-deploy → origin/docker-deploy
 
 ---
 **Status icons:** ⬜ Todo | 🔄 In Progress | ✅ Done | 🛑 Blocked | ⏭️ Skipped
