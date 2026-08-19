@@ -73,8 +73,8 @@ Viết `docs/tech-design/TDD-adb-add-device-api.md` quyết định:
   6. CODE-GRAPH: thêm 2 node endpoint mới + quan hệ với `ApiKeyEndpointFilter`, `AdbService.ConnectAsync`, `PollControlService.TriggerAsync`, `DeviceState.TryGet`.
 
 ## Commit
-- Hash: <sẽ điền sau khi commit>
-- Đã push: <sẽ điền sau khi push>
+- Hash: d4f14a3
+- Đã push: có (origin/docker-deploy)
 
 ---
 **Status icons:** ⬜ Todo | 🔄 In Progress | ✅ Done | 🛑 Blocked | ⏭️ Skipped
