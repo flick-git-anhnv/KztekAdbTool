@@ -1,7 +1,7 @@
 ---
 task: api-request-log
 created: 2026-08-19
-updated: 2026-08-19 13:38
+updated: 2026-08-19 13:42
 status: active
 workflow: WF-FEATURE
 priority: P2
@@ -46,7 +46,7 @@ Thêm tính năng ghi lịch sử mỗi request gọi vào 2 API mới có ApiKe
 | # | Bước | Agent | Status | Step file | Hoàn thành lúc |
 |---|------|-------|--------|-----------|-----------------|
 | 2.1 | [∥ 2.2] Backend: entity, EF migration, service, inject vào 2 endpoints, SignalR broadcast | Senior Developer | ⬜ | `steps/STEP-2.1-senior-dev-backend.md` | - |
-| 2.2 | [∥ 2.1] Frontend JS: SignalR event handler mới, render log entry trong panel `#log` | Junior Developer | ⬜ | `steps/STEP-2.2-junior-dev-frontend.md` | - |
+| 2.2 | [∥ 2.1] Frontend JS: SignalR event handler mới, render log entry trong panel `#log` | Junior Developer | ✅ | `steps/STEP-2.2-junior-dev-frontend.md` | 2026-08-19 13:42 |
 | 2.3 | Code review cuối + merge decision (sau khi 2.1 + 2.2 đều xong; Senior Dev phải đính kèm /verify-pr report) | Tech Lead | ⬜ | `steps/STEP-2.3-tl-code-review.md` | - |
 | 2.4 | Security audit — conditional: có DB schema mới; dữ liệu không nhạy cảm; Tech Lead tự quyết có chạy stride không | Tech Lead | ⬜ | `steps/STEP-2.4-tl-security-audit.md` | - |
 
@@ -99,6 +99,7 @@ Không có
 | 2026-08-19 13:26 | STEP-1.3 Done — RESOURCE plan tạo xong, P2 xác nhận, không conflict P1, commit 2ac134b | Engineering Manager |
 | 2026-08-19 13:31 | STEP-1.4 Done — Sprint plan 11 task, timeline 3 ngày, dependencies rõ, commit 641e49d | Project Manager |
 | 2026-08-19 13:38 | STEP-1.5 Done — TDD 12 sections, 12 decisions chốt (D1-D12), sẵn cho 2.1 ∥ 2.2 chạy song song, commit 1b73bca | Tech Lead |
+| 2026-08-19 13:42 | STEP-2.2 Done — JS handler ApiRequestLogged trong dashboard.js (+43 dòng), deviation đúng theo TDD (dashboard.js không phải signalr-client.js), syntax OK, commit d8abe37 | Junior Developer |
 
 ---
 **Status icons:** ⬜ Todo | 🔄 In Progress | ✅ Done | 🛑 Blocked | ⏭️ Skipped
