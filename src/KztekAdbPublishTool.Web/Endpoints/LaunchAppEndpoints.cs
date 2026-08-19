@@ -57,6 +57,7 @@ public static class LaunchAppEndpoints
 
             return MapAdbResult(serial, packageName, result, logger);
         })
+        .AddEndpointFilter<ApiRequestLoggingEndpointFilter>()   // OUTER — bắt được cả 401; đăng ký TRƯỚC ApiKeyEndpointFilter
         .AddEndpointFilter<ApiKeyEndpointFilter>();
 
         return app;

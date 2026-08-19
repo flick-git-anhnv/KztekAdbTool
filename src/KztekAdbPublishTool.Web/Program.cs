@@ -39,6 +39,11 @@ builder.Services.AddSingleton<DeviceState>();
 builder.Services.AddSingleton<InstallCoordinator>();
 builder.Services.AddSingleton<ScanCoordinator>();
 
+// ── API Request Log (feature api-request-log) ────────────────────────────────
+builder.Services.AddSingleton<ApiRequestLogRepository>();
+builder.Services.AddSingleton<IApiRequestLogService, ApiRequestLogService>();
+builder.Services.AddScoped<ApiRequestLoggingEndpointFilter>();
+
 // ── SignalR ───────────────────────────────────────────────────────────────────
 builder.Services.AddSignalR();
 

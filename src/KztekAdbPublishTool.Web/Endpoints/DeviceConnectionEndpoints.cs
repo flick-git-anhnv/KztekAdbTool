@@ -76,6 +76,7 @@ public static class DeviceConnectionEndpoints
                 stdErr = result.StdErr
             });
         })
+        .AddEndpointFilter<ApiRequestLoggingEndpointFilter>()   // OUTER — bắt được cả 401; đăng ký TRƯỚC ApiKeyEndpointFilter
         .AddEndpointFilter<ApiKeyEndpointFilter>();
 
         // ── GET /api/devices/{serial}/status ───────────────────────────────

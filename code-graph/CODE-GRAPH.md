@@ -1,7 +1,7 @@
 ---
 project: KztekAdbPublishTool (multi-project solution)
 last_updated: 2026-08-19
-updated_by: Senior Developer (BUG-adb-reconnect-after-restart)
+updated_by: Senior Developer (api-request-log STEP-2.1)
 ---
 
 # CODE-GRAPH — KztekAdbPublishTool Solution
@@ -16,6 +16,7 @@ updated_by: Senior Developer (BUG-adb-reconnect-after-restart)
 | 2026-08-19 | Senior Developer | STEP-3.1 [adb-add-device-api]: Thêm `POST /api/devices/connect-by-ip` + `GET /api/devices/{serial}/status` — `DeviceConnectionEndpoints`; cập nhật callers của `AdbService`, `DeviceState`, `PollControlService`, `ApiKeyEndpointFilter`, `Program.cs` |
 | 2026-08-19 | Senior Developer | BUG-adb-reconnect: Thêm `IAdbService` interface; `AdbService : IAdbService`; `DevicePollWorker` dùng `IAdbService` + thêm `WarmUpReconnectAsync()` (internal); `Program.cs` đăng ký `IAdbService`; thêm 6 unit tests `DevicePollWorkerWarmUpTests` |
 | 2026-08-19 | Senior Developer | BUG-adb-reconnect STEP-2.3: `AdbService.RunAsync` — re-throw OCE khi `ct.IsCancellationRequested` (phân biệt per-device timeout vs service shutdown); `WarmUpReconnectAsync` — fix logic ExitCode!= 0 → continue (không return/break), fix catch OCE → check ct, fix log message; thêm 2 unit tests (TimeoutOnSerial + OceOnSerial) |
+| 2026-08-19 | Senior Developer | api-request-log STEP-2.1: Thêm `Models/ApiRequestLogEntry`, `Services/ApiRequestLogConstants`, `Services/ApiRequestLogRepository` (raw ADO.NET SQLite), `Services/IApiRequestLogService` + `ApiRequestLogService` (ghi DB + broadcast SignalR `ApiRequestLogged`), `Endpoints/ApiRequestLoggingEndpointFilter` (OUTER filter bắt 401); gắn filter vào `LaunchAppEndpoints` + `DeviceConnectionEndpoints` POST route; đăng ký DI trong `Program.cs`; thêm 11 unit tests |
 
 ---
 
@@ -39,15 +40,19 @@ src/KztekAdbPublishTool.Web/
 │   └── AdbSettings.cs              ← POCO config (AdbPath, PollIntervalMs, DbPath, UploadsPath, MaxUploadBytes)
 ├── Endpoints/
 │   ├── ApkEndpoints.cs             ← POST /api/apk/upload, DELETE /api/apk
-│   ├── DeviceConnectionEndpoints.cs← POST /api/devices/connect-by-ip, GET /api/devices/{serial}/status (auth: ApiKeyEndpointFilter) [adb-add-device-api]
+│   ├── DeviceConnectionEndpoints.cs← POST /api/devices/connect-by-ip (filter: ApiRequestLoggingEndpointFilter OUTER + ApiKeyEndpointFilter), GET /api/devices/{serial}/status [adb-add-device-api; STEP-2.1]
 │   ├── DeviceEndpoints.cs          ← POST /api/devices/{connect,connect-batch,remove,poll}, GET /api/devices, POST /api/settings/package, /api/polling/toggle
 │   ├── HealthEndpoints.cs          ← GET /health
 │   ├── InstallEndpoints.cs         ← POST /api/install
+│   ├── LaunchAppEndpoints.cs       ← POST /api/launch-app (filter: ApiRequestLoggingEndpointFilter OUTER + ApiKeyEndpointFilter) [STEP-2.1]
+│   ├── ApiKeyEndpointFilter.cs     ← INNER auth filter; BẤT KHẢ XÂM PHẠM
+│   ├── ApiRequestLoggingEndpointFilter.cs ← OUTER logging filter; capture body + callerIp + result → gọi IApiRequestLogService.LogAsync [STEP-2.1]
 │   └── ScanEndpoints.cs            ← POST /api/scan/start, /api/scan/cancel
 ├── Hubs/
 │   └── DeviceHub.cs                ← SignalR Hub, endpoint /hubs/device
 ├── Models/
-│   └── DeviceRecord.cs             ← POCO entity (9 property), dùng làm DB row + SignalR DTO
+│   ├── DeviceRecord.cs             ← POCO entity (9 property), dùng làm DB row + SignalR DTO
+│   └── ApiRequestLogEntry.cs       ← POCO entity (11 property) — DB row + SignalR payload cho feature api-request-log [STEP-2.1]
 ├── Pages/
 │   ├── Index.cshtml                ← Dashboard: toolbar 3 hàng, grid 9 cột, action panel, log area
 │   ├── Index.cshtml.cs             ← IndexModel : PageModel
@@ -61,7 +66,11 @@ src/KztekAdbPublishTool.Web/
 │   ├── InstallCoordinator.cs       ← Singleton; queue install per-device (SemaphoreSlim(1)), global (SemaphoreSlim(4))
 │   ├── PollControlService.cs       ← Singleton; PollingEnabled flag + TriggerAsync (manual poll trigger)
 │   ├── ScanCoordinator.cs          ← Singleton; TCP probe scan (SemaphoreSlim(24), max 512 IP, timeout 1200ms)
-│   └── ScanRangeParser.cs          ← Static; parse IP range string → List<string> IPs
+│   ├── ScanRangeParser.cs          ← Static; parse IP range string → List<string> IPs
+│   ├── ApiRequestLogConstants.cs   ← Static; hằng số ApiName/Result enum-string, SignalR event name, length caps [STEP-2.1]
+│   ├── ApiRequestLogRepository.cs  ← Singleton; raw ADO.NET SQLite; INSERT ApiRequestLog; CREATE TABLE IF NOT EXISTS idempotent [STEP-2.1]
+│   ├── IApiRequestLogService.cs    ← Interface: LogAsync(entry, ct) — ghi DB + broadcast SignalR [STEP-2.1]
+│   └── ApiRequestLogService.cs     ← Singleton; impl IApiRequestLogService; truncate + InsertAsync + SendAsync("ApiRequestLogged"); swallow exception [STEP-2.1]
 ├── State/
 │   └── DeviceState.cs              ← Singleton; ConcurrentDictionary in-memory snapshot; AddOrUpdate/TryGet/GetAll/GetSerials/Remove
 ├── Workers/
@@ -83,7 +92,7 @@ src/KztekAdbPublishTool.Web/
 
 | Module | Phụ thuộc vào | Được gọi bởi (Callers) | Confidence | Last verified |
 |---|---|---|---|---|
-| `Program.cs` | AdbSettings, LaunchAppSettings, AdbService, DeviceRepository, ApkManifestReader, DevicePollWorker, DeviceHub, DeviceState, InstallCoordinator, ScanCoordinator, PollControlService | — (entry point) | CONFIRMED | 2026-08-18 |
+| `Program.cs` | AdbSettings, LaunchAppSettings, AdbService, DeviceRepository, ApkManifestReader, DevicePollWorker, DeviceHub, DeviceState, InstallCoordinator, ScanCoordinator, PollControlService, ApiRequestLogRepository, IApiRequestLogService, ApiRequestLoggingEndpointFilter | — (entry point) | CONFIRMED | 2026-08-19 |
 | `Configuration/AdbSettings` | — | Program.cs, AdbService, DeviceRepository, DevicePollWorker | CONFIRMED | 2026-08-10 |
 | `Configuration/LaunchAppSettings` | — | Program.cs, ApiKeyEndpointFilter | CONFIRMED | 2026-08-18 |
 | `Services/IAdbService` | — | DevicePollWorker (interface dep), AdbService (implements) | CONFIRMED | 2026-08-19 |
@@ -95,12 +104,18 @@ src/KztekAdbPublishTool.Web/
 | `Services/ScanCoordinator` | IHubContext\<DeviceHub\>, ScanRangeParser | ScanEndpoints | CONFIRMED | 2026-08-10 |
 | `Services/ScanRangeParser` | — | ScanCoordinator | CONFIRMED | 2026-08-10 |
 | `State/DeviceState` | System.Collections.Concurrent, Models/DeviceRecord | DevicePollWorker, DeviceEndpoints, InstallEndpoints, InstallCoordinator, LaunchAppEndpoints, DeviceConnectionEndpoints | CONFIRMED | 2026-08-19 |
-| `Endpoints/ApiKeyEndpointFilter` | IOptions\<LaunchAppSettings\>, ILogger | LaunchAppEndpoints (.AddEndpointFilter), DeviceConnectionEndpoints (.AddEndpointFilter) | CONFIRMED | 2026-08-19 |
-| `Endpoints/LaunchAppEndpoints` | DeviceState, AdbService, ApiKeyEndpointFilter, ILoggerFactory | Program.cs (MapLaunchAppEndpoints) | CONFIRMED | 2026-08-18 |
-| `Endpoints/DeviceConnectionEndpoints` | AdbService, PollControlService, DeviceState, ApiKeyEndpointFilter, ILoggerFactory | Program.cs (MapDeviceConnectionEndpoints) | CONFIRMED | 2026-08-19 |
+| `Endpoints/ApiKeyEndpointFilter` | IOptions\<LaunchAppSettings\>, ILogger | LaunchAppEndpoints (.AddEndpointFilter INNER), DeviceConnectionEndpoints (.AddEndpointFilter INNER) | CONFIRMED | 2026-08-19 |
+| `Endpoints/ApiRequestLoggingEndpointFilter` | IApiRequestLogService, ILogger | LaunchAppEndpoints (.AddEndpointFilter OUTER), DeviceConnectionEndpoints (.AddEndpointFilter OUTER, POST route only) | CONFIRMED | 2026-08-19 |
+| `Endpoints/LaunchAppEndpoints` | DeviceState, AdbService, ApiKeyEndpointFilter, ApiRequestLoggingEndpointFilter, ILoggerFactory | Program.cs (MapLaunchAppEndpoints) | CONFIRMED | 2026-08-19 |
+| `Endpoints/DeviceConnectionEndpoints` | AdbService, PollControlService, DeviceState, ApiKeyEndpointFilter, ApiRequestLoggingEndpointFilter, ILoggerFactory | Program.cs (MapDeviceConnectionEndpoints) | CONFIRMED | 2026-08-19 |
 | `Hubs/DeviceHub` | Microsoft.AspNetCore.SignalR.Hub | Program.cs (MapHub), DevicePollWorker, InstallCoordinator, ScanCoordinator | CONFIRMED | 2026-08-10 |
 | `Workers/DevicePollWorker` | IOptions\<AdbSettings\>, **IAdbService** (không còn phụ thuộc AdbService trực tiếp), DeviceRepository, DeviceState, PollControlService, IHubContext\<DeviceHub\> | Program.cs (AddHostedService) | CONFIRMED | 2026-08-19 |
 | `Models/DeviceRecord` | — | DeviceRepository, DeviceState, DevicePollWorker, InstallCoordinator, API JSON response | CONFIRMED | 2026-08-10 |
+| `Models/ApiRequestLogEntry` | — | ApiRequestLogRepository, ApiRequestLogService, ApiRequestLoggingEndpointFilter, SignalR broadcast payload | CONFIRMED | 2026-08-19 |
+| `Services/ApiRequestLogConstants` | — | ApiRequestLogService, ApiRequestLoggingEndpointFilter, tests | CONFIRMED | 2026-08-19 |
+| `Services/ApiRequestLogRepository` | IOptions\<AdbSettings\>, Microsoft.Data.Sqlite, Models/ApiRequestLogEntry | ApiRequestLogService | CONFIRMED | 2026-08-19 |
+| `Services/IApiRequestLogService` | — | ApiRequestLoggingEndpointFilter (dep), ApiRequestLogService (implements) | CONFIRMED | 2026-08-19 |
+| `Services/ApiRequestLogService` | ApiRequestLogRepository, IHubContext\<DeviceHub\>, IApiRequestLogService, ILogger | ApiRequestLoggingEndpointFilter (via IApiRequestLogService) | CONFIRMED | 2026-08-19 |
 | `Endpoints/DeviceEndpoints` | DeviceRepository, DeviceState, AdbService, PollControlService | Program.cs (MapDeviceEndpoints) | CONFIRMED | 2026-08-10 |
 | `Endpoints/InstallEndpoints` | DeviceState, DeviceRepository, InstallCoordinator | Program.cs (MapInstallEndpoints) | CONFIRMED | 2026-08-10 |
 | `Endpoints/ScanEndpoints` | ScanCoordinator | Program.cs (MapScanEndpoints) | CONFIRMED | 2026-08-10 |
@@ -144,6 +159,7 @@ src/KztekAdbPublishTool.Web/
 | `ScanProgress` | `int found, int scanned, int total` | ScanCoordinator | ✅ |
 | `ScanFound` | `string ipPort` | ScanCoordinator | ✅ |
 | `ScanCompleted` | `int total, int found` | ScanCoordinator | ✅ |
+| `ApiRequestLogged` | `ApiRequestLogEntry` (camelCase JSON: id, timestamp, apiName, httpMethod, path, parameters, result, httpStatusCode, errorMessage, callerIp, durationMs) | ApiRequestLogService (via IApiRequestLogService) | ✅ STEP-2.1 2026-08-19 |
 
 ### 2.5 Configuration (appsettings.json — section "Adb" và "LaunchApp")
 
@@ -180,3 +196,14 @@ src/KztekAdbPublishTool.Web/
 | 2026-08-19 | `Program.cs` | Thêm `AddSingleton<IAdbService>` → delegate sang `AdbService` singleton |
 | 2026-08-19 | `KztekAdbPublishTool.Web.csproj` | Thêm `InternalsVisibleTo` cho test project |
 | 2026-08-19 | `tests/.../DevicePollWorkerWarmUpTests.cs` | **MỚI** — 6 unit tests cho `WarmUpReconnectAsync` (WiFi call, USB filter, mixed, continue-on-fail, empty DB, pre-cancelled) |
+| 2026-08-19 | `src/.../Models/ApiRequestLogEntry.cs` | **MỚI** — POCO entity (api-request-log STEP-2.1) |
+| 2026-08-19 | `src/.../Services/ApiRequestLogConstants.cs` | **MỚI** — hằng số feature (api-request-log STEP-2.1) |
+| 2026-08-19 | `src/.../Services/ApiRequestLogRepository.cs` | **MỚI** — raw ADO.NET SQLite repository (api-request-log STEP-2.1) |
+| 2026-08-19 | `src/.../Services/IApiRequestLogService.cs` | **MỚI** — interface LogAsync (api-request-log STEP-2.1) |
+| 2026-08-19 | `src/.../Services/ApiRequestLogService.cs` | **MỚI** — singleton impl: truncate + InsertAsync + SignalR broadcast (api-request-log STEP-2.1) |
+| 2026-08-19 | `src/.../Endpoints/ApiRequestLoggingEndpointFilter.cs` | **MỚI** — OUTER logging filter, EnableBuffering + rewind body, ExtractStatusCode (api-request-log STEP-2.1) |
+| 2026-08-19 | `src/.../Endpoints/DeviceConnectionEndpoints.cs` | Thêm `.AddEndpointFilter<ApiRequestLoggingEndpointFilter>()` OUTER cho POST route (api-request-log STEP-2.1) |
+| 2026-08-19 | `src/.../Endpoints/LaunchAppEndpoints.cs` | Thêm `.AddEndpointFilter<ApiRequestLoggingEndpointFilter>()` OUTER (api-request-log STEP-2.1) |
+| 2026-08-19 | `src/.../Program.cs` | Thêm 3 dòng DI: ApiRequestLogRepository (Singleton), IApiRequestLogService (Singleton), ApiRequestLoggingEndpointFilter (Scoped) |
+| 2026-08-19 | `tests/.../ApiRequestLogServiceTests.cs` | **MỚI** — 4 unit tests: happy path, truncate params, truncate errMsg, hub throw swallow |
+| 2026-08-19 | `tests/.../ApiRequestLoggingEndpointFilterTests.cs` | **MỚI** — 7 unit tests: 200/401/422, body buffering, handler throw, XFF, durationMs |
