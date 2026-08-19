@@ -83,6 +83,12 @@ public sealed class AdbService : IAdbService
         catch (OperationCanceledException)
         {
             try { process.Kill(true); } catch { /* best effort */ }
+
+            // Nếu ct gốc (stoppingToken của caller) đã bị cancel → service đang shutdown thật.
+            // Re-throw để caller phân biệt "service shutdown" vs "per-device timeout"
+            // (chỉ timeoutCts nội bộ fired, không phải ct gốc).
+            ct.ThrowIfCancellationRequested();
+
             return new AdbCommandResult
             {
                 ExitCode = -1,

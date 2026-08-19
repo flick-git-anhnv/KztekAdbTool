@@ -112,7 +112,8 @@ public sealed class DevicePollWorker : BackgroundService
             {
                 var result = await _adb.ConnectAsync(device.Serial, timeoutMs: 5000, ct: ct);
 
-                if (result.ExitCode == -1 && string.IsNullOrEmpty(result.StdOut))
+                if (result.ExitCode == -1
+                    && result.StdErr.Contains("Không tìm thấy adb tại", StringComparison.Ordinal))
                 {
                     // ADB binary missing — không có điểm warm-up tiếp, dừng sớm.
                     _logger.LogWarning(
@@ -121,13 +122,32 @@ public sealed class DevicePollWorker : BackgroundService
                     return;
                 }
 
+                if (result.ExitCode != 0)
+                {
+                    // Per-device timeout hoặc lỗi kết nối — KHÔNG phải lỗi fatal.
+                    // Tiếp tục device kế tiếp thay vì dừng hẳn vòng warm-up.
+                    _logger.LogWarning(
+                        "Warm-up connect {Serial} failed/timeout: {StdErr} — skipping, continuing with next device",
+                        device.Serial, result.StdErr);
+                    continue;
+                }
+
                 _logger.LogInformation(
                     "Warm-up connect {Serial}: {StdOut}",
                     device.Serial, result.StdOut.Trim());
             }
             catch (OperationCanceledException)
             {
-                break;
+                // Phân biệt: ct gốc bị cancel (service shutdown thật) vs OCE bị propagate
+                // từ path khác (defensive). AdbService.RunAsync re-throw OCE khi
+                // ct.IsCancellationRequested == true; per-device timeout trả về result thay vì throw.
+                if (ct.IsCancellationRequested) break;
+
+                // OCE propagate không do ct gốc — defensive path. Log + continue device kế tiếp.
+                _logger.LogWarning(
+                    "Warm-up connect {Serial} timeout — skipping, continuing with next device",
+                    device.Serial);
+                continue;
             }
             catch (Exception ex)
             {

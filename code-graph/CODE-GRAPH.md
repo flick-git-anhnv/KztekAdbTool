@@ -15,6 +15,7 @@ updated_by: Senior Developer (BUG-adb-reconnect-after-restart)
 | 2026-08-18 | Senior Developer | STEP-3.1: Thêm `POST /api/launch-app` — `LaunchAppSettings`, `ApiKeyEndpointFilter`, `LaunchAppEndpoints`; cập nhật callers của `AdbService`, `DeviceState`, `Program.cs` |
 | 2026-08-19 | Senior Developer | STEP-3.1 [adb-add-device-api]: Thêm `POST /api/devices/connect-by-ip` + `GET /api/devices/{serial}/status` — `DeviceConnectionEndpoints`; cập nhật callers của `AdbService`, `DeviceState`, `PollControlService`, `ApiKeyEndpointFilter`, `Program.cs` |
 | 2026-08-19 | Senior Developer | BUG-adb-reconnect: Thêm `IAdbService` interface; `AdbService : IAdbService`; `DevicePollWorker` dùng `IAdbService` + thêm `WarmUpReconnectAsync()` (internal); `Program.cs` đăng ký `IAdbService`; thêm 6 unit tests `DevicePollWorkerWarmUpTests` |
+| 2026-08-19 | Senior Developer | BUG-adb-reconnect STEP-2.3: `AdbService.RunAsync` — re-throw OCE khi `ct.IsCancellationRequested` (phân biệt per-device timeout vs service shutdown); `WarmUpReconnectAsync` — fix logic ExitCode!= 0 → continue (không return/break), fix catch OCE → check ct, fix log message; thêm 2 unit tests (TimeoutOnSerial + OceOnSerial) |
 
 ---
 

@@ -177,23 +177,112 @@ public sealed class DevicePollWorkerWarmUpTests : IDisposable
         Assert.Empty(fake.ConnectCalls);
     }
 
+    /// <summary>
+    /// Bug fix 2.3: device đầu tiên timeout (per-device timeout, ExitCode=-1) →
+    /// device thứ 2 và 3 VẪN được gọi ConnectAsync — không break toàn vòng warm-up.
+    /// Test path: AdbService.RunAsync trả về ExitCode=-1 (không throw OCE) cho per-device timeout.
+    /// </summary>
+    [Fact]
+    public async Task WarmUpReconnect_FirstDeviceTimesOut_ContinuesToRemainingDevices()
+    {
+        // Arrange: 3 WiFi devices; device 1 simulate per-device timeout (ExitCode=-1)
+        _repo.Upsert(MakeDevice("192.168.1.10:5555"));
+        _repo.Upsert(MakeDevice("192.168.1.11:5555"));
+        _repo.Upsert(MakeDevice("192.168.1.12:5555"));
+
+        var fake = new FakeAdbService();
+        fake.TimeoutOnSerial.Add("192.168.1.10:5555"); // device 1 timeout: trả về ExitCode=-1
+
+        var worker = CreateWorker(fake);
+
+        // Act — ct KHÔNG bị cancel (không phải service shutdown)
+        await worker.WarmUpReconnectAsync(CancellationToken.None);
+
+        // Assert: cả 3 device đều được gọi ConnectAsync
+        // (device 1 timeout không được phép break vòng lặp)
+        Assert.Equal(3, fake.ConnectCalls.Count);
+        Assert.Contains("192.168.1.10:5555", fake.ConnectCalls);
+        Assert.Contains("192.168.1.11:5555", fake.ConnectCalls);
+        Assert.Contains("192.168.1.12:5555", fake.ConnectCalls);
+    }
+
+    /// <summary>
+    /// Bug fix 2.3 — defensive path: device đầu tiên ném OperationCanceledException
+    /// mà KHÔNG cancel ct gốc (giả lập OCE propagate từ internal timeout) →
+    /// device thứ 2 VẪN được gọi ConnectAsync.
+    /// Test path: catch(OCE) { if (!ct.IsCancellationRequested) continue; }
+    /// </summary>
+    [Fact]
+    public async Task WarmUpReconnect_FirstDeviceOcesWithoutCtCancel_ContinuesToNextDevice()
+    {
+        // Arrange: 2 WiFi devices; device 1 ném OCE nhưng ct gốc KHÔNG bị cancel
+        _repo.Upsert(MakeDevice("192.168.1.10:5555"));
+        _repo.Upsert(MakeDevice("192.168.1.11:5555"));
+
+        var fake = new FakeAdbService();
+        fake.OceOnSerial.Add("192.168.1.10:5555"); // ném OCE, ct.IsCancellationRequested == false
+
+        var worker = CreateWorker(fake);
+
+        // Act — ct KHÔNG bị cancel
+        await worker.WarmUpReconnectAsync(CancellationToken.None);
+
+        // Assert: cả 2 device đều được gọi (OCE của device 1 không break vòng lặp)
+        Assert.Equal(2, fake.ConnectCalls.Count);
+        Assert.Contains("192.168.1.10:5555", fake.ConnectCalls);
+        Assert.Contains("192.168.1.11:5555", fake.ConnectCalls);
+    }
+
     // ── Fakes ────────────────────────────────────────────────────────────────────
 
     /// <summary>
     /// Fake IAdbService ghi nhận ConnectAsync calls và cho phép simulate lỗi cho serial cụ thể.
+    ///
+    /// - FailOnSerial    : ném InvalidOperationException (lỗi thông thường)
+    /// - TimeoutOnSerial : trả về AdbCommandResult ExitCode=-1 (giả lập per-device timeout
+    ///                     sau khi AdbService.RunAsync đã xử lý nội bộ, theo fix 2.3)
+    /// - OceOnSerial     : ném OperationCanceledException MÀ KHÔNG cancel ct gốc
+    ///                     (test defensive catch path trong WarmUpReconnectAsync)
     /// </summary>
     internal sealed class FakeAdbService : IAdbService
     {
         public List<string> ConnectCalls { get; } = new();
         public HashSet<string> FailOnSerial { get; } = new(StringComparer.Ordinal);
 
+        /// <summary>
+        /// Simulate per-device timeout: ConnectAsync trả về AdbCommandResult với ExitCode=-1
+        /// (giống hành vi AdbService.RunAsync sau fix 2.3 — không re-throw khi chỉ internal timeout).
+        /// </summary>
+        public HashSet<string> TimeoutOnSerial { get; } = new(StringComparer.Ordinal);
+
+        /// <summary>
+        /// Simulate OperationCanceledException propagate mà KHÔNG cancel ct gốc
+        /// (test defensive catch block trong WarmUpReconnectAsync).
+        /// </summary>
+        public HashSet<string> OceOnSerial { get; } = new(StringComparer.Ordinal);
+
         public Task<AdbCommandResult> ConnectAsync(string ipPort, int timeoutMs = 10000, CancellationToken ct = default)
         {
             ConnectCalls.Add(ipPort);
 
+            // Simulate real AdbService: re-throw nếu ct gốc (stoppingToken) bị cancel.
+            ct.ThrowIfCancellationRequested();
+
             if (FailOnSerial.Contains(ipPort))
                 return Task.FromException<AdbCommandResult>(
                     new InvalidOperationException($"Simulated connect failure for {ipPort}"));
+
+            if (TimeoutOnSerial.Contains(ipPort))
+                return Task.FromResult(new AdbCommandResult
+                {
+                    ExitCode = -1,
+                    StdOut = string.Empty,
+                    StdErr = $"adb connect {ipPort} timeout sau 5000ms",
+                });
+
+            if (OceOnSerial.Contains(ipPort))
+                return Task.FromException<AdbCommandResult>(
+                    new OperationCanceledException($"Simulated per-device timeout OCE for {ipPort}"));
 
             return Task.FromResult(new AdbCommandResult
             {
