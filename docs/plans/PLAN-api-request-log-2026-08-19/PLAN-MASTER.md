@@ -1,7 +1,7 @@
 ---
 task: api-request-log
 created: 2026-08-19
-updated: 2026-08-19 13:31
+updated: 2026-08-19 13:38
 status: active
 workflow: WF-FEATURE
 priority: P2
@@ -39,7 +39,7 @@ Thêm tính năng ghi lịch sử mỗi request gọi vào 2 API mới có ApiKe
 | 1.2 | User stories + AC dạng Given/When/Then | Business Analyst | ✅ | `steps/STEP-1.2-ba-user-stories.md` | 2026-08-19 13:24 |
 | 1.3 | Estimate resource, confirm priority P2, phân bổ dev | Engineering Manager | ✅ | `steps/STEP-1.3-em-resource-estimate.md` | 2026-08-19 13:26 |
 | 1.4 | Sprint plan (lightweight) + task board | Project Manager | ✅ | `steps/STEP-1.4-pjm-sprint-plan.md` | 2026-08-19 13:31 |
-| 1.5 | TDD: schema ApiRequestLog, service interface, endpoint changes, SignalR event contract, JS handler contract | Tech Lead | ⬜ | `steps/STEP-1.5-tl-tdd.md` | - |
+| 1.5 | TDD: schema ApiRequestLog, service interface, endpoint changes, SignalR event contract, JS handler contract | Tech Lead | ✅ | `steps/STEP-1.5-tl-tdd.md` | 2026-08-19 13:38 |
 
 ### Phase 2: Triển khai
 
@@ -98,6 +98,7 @@ Không có
 | 2026-08-19 13:24 | STEP-1.2 Done — 6 User Stories + AC + DOCX, commit 6c77fa4 | Business Analyst |
 | 2026-08-19 13:26 | STEP-1.3 Done — RESOURCE plan tạo xong, P2 xác nhận, không conflict P1, commit 2ac134b | Engineering Manager |
 | 2026-08-19 13:31 | STEP-1.4 Done — Sprint plan 11 task, timeline 3 ngày, dependencies rõ, commit 641e49d | Project Manager |
+| 2026-08-19 13:38 | STEP-1.5 Done — TDD 12 sections, 12 decisions chốt (D1-D12), sẵn cho 2.1 ∥ 2.2 chạy song song, commit [pending] | Tech Lead |
 
 ---
 **Status icons:** ⬜ Todo | 🔄 In Progress | ✅ Done | 🛑 Blocked | ⏭️ Skipped
