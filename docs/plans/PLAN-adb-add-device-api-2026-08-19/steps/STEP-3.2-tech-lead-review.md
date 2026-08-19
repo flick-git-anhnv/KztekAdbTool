@@ -145,8 +145,8 @@ Không có mục Fail ở A01/A02/A03/A07 (nhóm rủi ro cao) → không BLOCK.
   4. `src/KztekAdbPublishTool.Web/Endpoints/DeviceConnectionEndpoints.cs` + `DeviceConnectionEndpointTests.cs` — QA đọc để hiểu pattern test đã có, tránh trùng lặp.
 
 ## Commit
-- Hash: (không có — chỉ cập nhật step file + MASTER, không đổi code)
-- Đã push: (sẽ push chung với commit update MASTER)
+- Hash: `5254df7`
+- Đã push: có (chờ `git push` cuối bước)
 
 ---
 **Status icons:** ⬜ Todo | 🔄 In Progress | ✅ Done | 🛑 Blocked | ⏭️ Skipped
