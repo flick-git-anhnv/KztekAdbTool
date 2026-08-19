@@ -1,7 +1,7 @@
 ---
 task: adb-add-device-api
 created: 2026-08-19
-updated: 2026-08-19 10:09
+updated: 2026-08-19 10:13
 status: planning
 workflow: WF-FEATURE
 priority: P1
@@ -43,7 +43,7 @@ Cả 2 API dùng lại đúng `ApiKeyEndpointFilter` + config `LaunchApp:ApiKey`
 | # | Bước | Agent | Status | Step file | Hoàn thành lúc |
 |---|------|-------|--------|-----------|-----------------|
 | 1.1 | Viết PRD phạm vi hẹp: 2 API mới, mục tiêu, AC tổng quan, non-goals | Product Manager | ✅ | `steps/STEP-1.1-product-manager-prd.md` | 2026-08-19 10:09 |
-| 1.2 | Chi tiết hóa AC theo Given/When/Then, user story cho 2 API | Business Analyst | ⬜ | `steps/STEP-1.2-business-analyst-ac.md` | - |
+| 1.2 | Chi tiết hóa AC theo Given/When/Then, user story cho 2 API | Business Analyst | ✅ | `steps/STEP-1.2-business-analyst-ac.md` | 2026-08-19 10:13 |
 | 1.3 | Estimate resource, xác nhận priority P1, phân bổ team | Engineering Manager | ⬜ | `steps/STEP-1.3-engineering-manager-estimate.md` | - |
 | 1.4 | Lên task board, sprint plan cho feature này | Project Manager | ⬜ | `steps/STEP-1.4-project-manager-sprint.md` | - |
 
@@ -98,6 +98,7 @@ Không có
 |------|----------|-------|
 | 2026-08-19 | Plan tạo mới | task-planner |
 | 2026-08-19 10:09 | STEP-1.1 Done — PRD viết xong, DOCX xuất, commit 359f537 | Product Manager |
+| 2026-08-19 10:13 | STEP-1.2 Done — US viết xong 14 scenario, DOCX xuất, commit b7e9709 | Business Analyst |
 
 ---
 **Status icons:** ⬜ Todo | 🔄 In Progress | ✅ Done | 🛑 Blocked | ⏭️ Skipped
