@@ -90,8 +90,9 @@ Review toàn bộ code thay đổi từ STEP-2.1 (backend) và STEP-2.2 (fronten
 - next_inputs: (i) commit hash 79ae3cf (backend) + d8abe37 (frontend) — UXR (3.1) và QAE (3.2) checkout đúng nhánh `docker-deploy`; (ii) SignalR event name `ApiRequestLogged` + camelCase payload schema; (iii) 2 endpoint đã gắn filter: POST `/api/devices/connect-by-ip` + POST `/api/launch-app` (KHÔNG áp cho GET status); (iv) test data cho QAE: gọi 2 API với body hợp lệ (Success), body sai (Failure 400/422), header sai (Unauthorized 401), body vô nghĩa (`invalid body`), body rỗng.
 
 ## Commit
-- Hash: [điền sau khi commit]
+- Hash: a4a7259 (cùng commit với STEP-2.4)
 - Đã push: không (theo yêu cầu task)
+- Code reviewed commits: 79ae3cf (backend Senior Dev), d8abe37 (frontend Junior Dev)
 
 ---
 **Status icons:** ⬜ Todo | 🔄 In Progress | ✅ Done | 🛑 Blocked | ⏭️ Skipped

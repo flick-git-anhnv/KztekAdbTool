@@ -71,7 +71,7 @@ Status: **⏭️ Skipped có lý do rõ.**
 - next_inputs: (i) SKIP STRIDE — không có security constraint mới cho UXR (3.1) hoặc QAE (3.2); (ii) sang phase 3 bình thường (UXR + QAE + QAL + Deploy).
 
 ## Commit
-- Hash: [điền sau khi commit]
+- Hash: a4a7259 (cùng commit với STEP-2.3)
 - Đã push: không (theo yêu cầu task)
 
 ---
