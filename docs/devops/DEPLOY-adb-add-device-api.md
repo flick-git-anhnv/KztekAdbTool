@@ -5,7 +5,7 @@ author: DevOps Engineer
 reviewed-by: DevOps Lead
 created: 2026-08-19
 updated: 2026-08-19
-status: staging-smoke-tested-nhom-b-pending
+status: staging-approved-nhom-b-pending
 tdd: docs/tech-design/TDD-adb-add-device-api.md
 ---
 
@@ -71,7 +71,7 @@ docker run -d \
 [x] PR approved bởi Tech Lead                              ✅ (STEP-3.2 done)
 [ ] CI/CD pass toàn bộ                                    — (chưa có CI pipeline; unit test 64/64 PASS local)
 [x] QA sign-off trên staging                               ✅ CÓ ĐIỀU KIỆN (xem mục 5)
-[ ] DevOps Lead approve STAGING                            ⬜ (STEP-4.4 — chờ DevOps Lead)
+[x] DevOps Lead approve STAGING                            ✅ (2026-08-19 — xem mục 6)
 [ ] DevOps Lead approve PRODUCTION                         ⬜ CHỜ USER — xem mục 8
 [x] EM approve (feature lớn)                               ⏭️ Skipped — P1 feature không yêu cầu EM approve riêng
 [x] Rollback plan đã chuẩn bị                              ✅ (xem mục 4)
@@ -183,7 +183,43 @@ user PHẢI tự thực hiện thủ công:
 
 ---
 
-## 6. Cấu hình tham khảo (TDD)
+## 6. DevOps Lead Approval
+
+> Điền bởi DevOps Lead tại STEP-4.4 — 2026-08-19
+
+### Quyết định STAGING: APPROVED
+
+**Căn cứ xét duyệt:**
+
+| Tiêu chí | Trạng thái | Ghi chú |
+|---|---|---|
+| PR approved bởi Tech Lead | PASS | STEP-3.2 — code review + security-audit-stride PASS |
+| Unit test 64/64 PASS | PASS | STEP-3.1 |
+| security-audit-stride OWASP + STRIDE | PASS | STEP-3.2 — 0 Fail; 1 FYI (DoS, không blocker) |
+| QA sign-off staging | PASS CÓ ĐIỀU KIỆN | STEP-4.2 — P0=0, P1=0 |
+| Smoke test NHÓM A (7/7 HTTP case) | PASS | STEP-4.3 — 401/400/404 đúng chuẩn |
+| Image build thành công (commit 8db0d72) | PASS | STEP-4.3 |
+| Health check /health | PASS | STEP-4.3 — `{"ok":true,"adbVersion":"..."}` |
+
+**STAGING APPROVED — 2026-08-19 bởi DevOps Lead**
+
+---
+
+### Quyết định PRODUCTION: CHUA APPROVE — Cho User
+
+**Lý do:** Gate NHÓM B chưa đóng. Môi trường sandbox không có thiết bị Android thật để verify TC-C01–TC-C06.
+
+**Hành động bắt buộc trước khi go-live production (xem mục 8 — Bàn giao):**
+
+1. User tự thực hiện smoke test TC-C01–TC-C06 với thiết bị Android thật trên staging/pre-prod.
+2. Nếu tất cả 6 case PASS → go-live production, thông báo team (#deploys), standby monitor 30 phút.
+3. Nếu có case FAIL → báo ngay cho Tech Lead. KHÔNG deploy production khi biết có bug.
+
+> KHÔNG deploy production trước khi gate NHÓM B đóng.
+
+---
+
+## 7. Cấu hình tham khảo (TDD)
 
 - Env var: `LaunchApp__ApiKey` (mapping `LaunchApp:ApiKey` trong appsettings)
 - Header xác thực: `x-api-key`
@@ -193,7 +229,7 @@ user PHẢI tự thực hiện thủ công:
 
 ---
 
-## 7. Bàn giao cho User — Hành động thủ công còn lại trước khi go-live thật
+## 8. Bàn giao cho User — Hành động thủ công còn lại trước khi go-live thật
 
 > **Mức độ: BẮT BUỘC** — Toàn bộ agent chain (11 bước) đã hoàn thành đến STEP-4.3.
 > Phần còn lại là hành động chỉ USER mới thực hiện được trên hạ tầng thật của KZTEK.
@@ -233,8 +269,9 @@ docker compose up -d --build
 
 ---
 
-## 8. Lịch sử deploy
+## 9. Lịch sử deploy
 
 | Ngày | Môi trường | Người thực hiện | Kết quả | Ghi chú |
 |------|-----------|-----------------|---------|---------|
 | 2026-08-19 | Container (local smoke test) | DevOps Engineer | PASS (7/7 NHÓM A HTTP case) | Chưa có thiết bị Android thật (NHÓM B pending) |
+| 2026-08-19 | Staging | DevOps Lead | APPROVED | Evidence: 7/7 NHÓM A PASS, QA sign-off P0=0/P1=0, security-audit PASS. NHÓM B (6 case thiết bị thật) — gate chưa đóng, chờ user go-live production |
