@@ -75,8 +75,8 @@ Kết luận: Pass
 - next_inputs: Commit hash (điền sau commit), branch `docker-deploy`. Tech Lead cần review: `AdbService.cs` lines ~76-96 (RunAsync catch block) + `DevicePollWorker.cs` lines ~107-160 (WarmUpReconnectAsync foreach body) + 2 test mới trong `DevicePollWorkerWarmUpTests.cs`.
 
 ## Commit
-- Hash: (điền sau commit)
-- Đã push: chưa
+- Hash: cff893f
+- Đã push: có
 
 ---
 **Status icons:** ⬜ Todo | 🔄 In Progress | ✅ Done | 🛑 Blocked | ⏭️ Skipped

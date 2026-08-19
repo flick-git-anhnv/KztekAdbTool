@@ -1,7 +1,7 @@
 ---
 task: adb-reconnect-after-restart
 created: 2026-08-19
-updated: 2026-08-19 11:50
+updated: 2026-08-19 12:03
 status: active
 workflow: WF-BUGFIX
 priority: P1
@@ -37,12 +37,15 @@ Sau khi restart service, các API `GET /api/devices/{serial}/status` và `POST /
 |---|------|-------|--------|-----------|-----------------|
 | 2.1 | Viết fix auto-reconnect sau restart, tạo PR | Senior Developer | ✅ | `steps/STEP-2.1-fix-auto-reconnect.md` | 2026-08-19 11:39 |
 | 2.2 | Code review PR (yêu cầu /verify-pr report trước) | Tech Lead | ✅ | `steps/STEP-2.2-tech-lead-review.md` | 2026-08-19 11:43 |
+| 2.3 | **[Bổ sung — Dispatcher tự phát hiện qua verify code, nâng severity từ P2/P3 QA báo lên P1]** Fix bug thứ 2: `OperationCanceledException` do per-device timeout (linked CTS `CancelAfter`) bị `catch` nhầm thành lệnh dừng toàn bộ vòng warm-up (`break`) — khiến device đầu tiên timeout sẽ chặn luôn các device WiFi còn lại không được thử reconnect. Phải phân biệt: timeout riêng của device (tiếp tục device kế) vs `ct` gốc bị cancel (dừng hẳn) | Senior Developer | ✅ | `steps/STEP-2.3-fix-timeout-cancellation-bug.md` | 2026-08-19 12:03 |
+| 2.4 | Code review lại fix 2.3 | Tech Lead | ⬜ | `steps/STEP-2.4-tech-lead-review-2.md` | - |
 
 ### Phase 3: Verify & Deploy
 
 | # | Bước | Agent | Status | Step file | Hoàn thành lúc |
 |---|------|-------|--------|-----------|-----------------|
 | 3.1 | Verify fix trên staging, regression test | QA Engineer | ✅ | `steps/STEP-3.1-qa-verify-staging.md` | 2026-08-19 11:50 |
+| 3.1b | Re-verify sau fix 2.3 — xác nhận nhiều WiFi device offline không còn chặn nhau | QA Engineer | ⬜ | `steps/STEP-3.1b-qa-reverify.md` | - |
 | 3.2 | Sign-off chất lượng (P1 — bắt buộc) | QA Lead | ⬜ | `steps/STEP-3.2-qa-lead-signoff.md` | - |
 | 3.3 | Deploy fix lên môi trường tương ứng | DevOps Engineer | ⬜ | `steps/STEP-3.3-deploy-fix.md` | - |
 
@@ -72,6 +75,8 @@ Không có
 | 2026-08-19 11:39 | STEP-2.1 Done — IAdbService + WarmUpReconnectAsync + 6 unit tests; commit 3a86825; 71/71 PASS; chuyển Tech Lead review | Senior Developer |
 | 2026-08-19 11:43 | STEP-2.2 Done — Tech Lead APPROVE commit 3a86825; verify build+test độc lập PASS; sẵn sàng QA staging | Tech Lead |
 | 2026-08-19 11:50 | STEP-3.1 Done — QA verify local: build 0 error, 71/71 PASS, warm-up log confirmed, TC-3/TC-4 PASS, TC-1/TC-2 ENV_LIMIT (không có Android device thật); phát hiện P2/P3 log misleading; chuyển QA Lead sign-off | QA Engineer |
+| 2026-08-19 | Dispatcher đọc trực tiếp `DevicePollWorker.WarmUpReconnectAsync` + `AdbService.RunAsync` để verify artifact trước khi chuyển QA Lead — phát hiện finding QA báo (P2/P3) thực chất nghiêm trọng hơn: `RunAsync` dùng `CancellationTokenSource.CreateLinkedTokenSource(ct).CancelAfter(timeoutMs)`, nên timeout riêng từng device cũng ném `OperationCanceledException` giống hệt việc `ct` gốc bị cancel. `WarmUpReconnectAsync` catch `OperationCanceledException` → `break` toàn vòng lặp → 1 device timeout sẽ chặn TẤT CẢ device WiFi còn lại không được thử reconnect, không đạt mục tiêu fix cho fleet nhiều thiết bị. Nâng severity P2/P3 → **P1**, chèn thêm Bước 2.3 (SD fix lại) → 2.4 (TL review lại) → 3.1b (QA re-verify) trước khi vào 3.2 sign-off. KHÔNG cho QA Lead sign-off với bug này còn tồn tại. | Dispatcher |
+| 2026-08-19 12:03 | STEP-2.3 Done — fix RunAsync re-throw OCE khi ct cancel; WarmUpReconnectAsync phân biệt timeout vs shutdown; 2 test mới; 73/73 PASS; commit cff893f; chuyển Tech Lead review lại (2.4) | Senior Developer |
 
 ---
 **Status icons:** ⬜ Todo | 🔄 In Progress | ✅ Done | 🛑 Blocked | ⏭️ Skipped
