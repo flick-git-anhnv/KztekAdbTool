@@ -56,7 +56,7 @@ Sign-off decision nhúng trong step file này — không tạo file riêng (per 
 - next_inputs: Quyết định: APPROVED. Không có P2/P3 bug cần track (OBS-02 là observation vận hành, không phải bug). DevOps Engineer cần rebuild image trước deploy staging.
 
 ## Commit
-- Hash: [điền sau khi commit]
+- Hash: 1e8598a
 - Đã push: không
 
 ---
