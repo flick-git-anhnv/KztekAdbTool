@@ -1,7 +1,7 @@
 ---
 task: api-request-log
 created: 2026-08-19
-updated: 2026-08-19 14:12
+updated: 2026-08-19 14:50
 status: active
 workflow: WF-FEATURE
 priority: P2
@@ -104,6 +104,8 @@ Không có
 | 2026-08-19 13:55 | STEP-2.3 Done — Code review PASS 12 hạng mục vs TDD, build 0/0, test 84/84 pass, APPROVED cả 2 PR (79ae3cf backend + d8abe37 frontend), không có code change từ TL | Tech Lead |
 | 2026-08-19 13:55 | STEP-2.4 Skipped — KHÔNG chạy STRIDE (không đụng auth/payment, DB schema chỉ INSERT parameterized, dữ liệu log không nhạy cảm, XSS-safe qua textContent); ghi backlog: cap body size 8KB ở filter khi go public | Tech Lead |
 | 2026-08-19 14:12 | STEP-3.1 Done — UXR pass 6/7 criteria (C3 Fail: UI-001 High — Parameters null); 5 TC chạy xong; rebuild image cần thiết trước test; commit 345792c | UX/UI Reviewer |
+| 2026-08-19 14:35 | Fix UI-001 — root cause: model binding trong Minimal API consume body stream TRƯỚC filter chain; fix: serialize context.Arguments[0] thay vì đọc raw stream; 85/85 test pass; verify curl OK; commit ae2a211 | Senior Developer |
+| 2026-08-19 14:50 | Tech Lead review fix UI-001 — APPROVED (build 0/0, test 85/85, root cause đúng, null-safety đủ, TDD đã cập nhật pseudocode + R1/R5 + task T2.1.5); không có code change; sẵn sàng chuyển QA Engineer (STEP-3.2) | Tech Lead |
 
 ---
 **Status icons:** ⬜ Todo | 🔄 In Progress | ✅ Done | 🛑 Blocked | ⏭️ Skipped

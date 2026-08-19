@@ -312,10 +312,13 @@ public sealed class ApiRequestLoggingEndpointFilter : IEndpointFilter
         var path = http.Request.Path.Value ?? string.Empty;
         var apiName = ResolveApiName(path);   // "AddDevice" | "LaunchApp"
 
-        // Đọc body sớm (buffered) để log Parameters kể cả khi 401 xảy ra sau
-        //   → gọi http.Request.EnableBuffering() TRƯỚC read; rewind sau read.
-        //   → nếu read fail (VD: content-type không phải json), Parameters = null (hoặc "invalid body").
-        string? parametersJson = await TryReadBodyJsonAsync(http, ct: http.RequestAborted);
+        // [UPDATE 2026-08-19 — Fix UI-001] KHÔNG đọc raw body stream.
+        //   Lý do: trong Minimal API, model binding (ReadFromJsonAsync) chạy TRƯỚC filter chain,
+        //   nên khi filter được gọi http.Request.Body đã bị consumed → stream ở EOF → luôn trả empty.
+        //   Thay vào đó: serialize context.Arguments[0] — bound request object mà framework đã chuẩn bị
+        //   trước filter chain. Vẫn bắt được cả 401 vì filter này đăng ký OUTER (trước ApiKeyEndpointFilter),
+        //   và Minimal API bind arguments trước bất kỳ filter nào chạy.
+        string? parametersJson = TryExtractParametersJson(context);
 
         var callerIp = ResolveCallerIp(http);
 
@@ -393,23 +396,31 @@ public sealed class ApiRequestLoggingEndpointFilter : IEndpointFilter
         return http.Connection.RemoteIpAddress?.ToString() ?? "unknown";
     }
 
-    private static async Task<string?> TryReadBodyJsonAsync(HttpContext http, CancellationToken ct)
+    // [UPDATE 2026-08-19 — Fix UI-001] Bỏ TryReadBodyJsonAsync, thay bằng TryExtractParametersJson.
+    // Options dùng chung — tránh allocate mới mỗi request.
+    private static readonly System.Text.Json.JsonSerializerOptions CamelCaseOptions = new()
+    {
+        PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
+    };
+
+    // Trích xuất tham số request bằng cách serialize argument đã được model-bound.
+    // Bỏ qua các framework/system type (HttpContext, CancellationToken, DI services) — chỉ log request DTO.
+    // Nếu framework model-binding fail (VD: body malformed JSON) → request bị reject 400 TRƯỚC khi filter chạy
+    // → không cần xử lý "invalid body" ở đây (khác bản trước đọc raw stream).
+    private static string? TryExtractParametersJson(EndpointFilterInvocationContext context)
     {
         try
         {
-            http.Request.EnableBuffering();
-            using var reader = new StreamReader(
-                http.Request.Body,
-                encoding: System.Text.Encoding.UTF8,
-                detectEncodingFromByteOrderMarks: false,
-                bufferSize: 1024,
-                leaveOpen: true);
-            var body = await reader.ReadToEndAsync(ct);
-            http.Request.Body.Position = 0;   // rewind cho handler đọc lại
-            if (string.IsNullOrWhiteSpace(body)) return null;
-            // Best-effort: kiểm tra là JSON hợp lệ để tránh log rác. Nếu không parse được → ghi "invalid body".
-            try { _ = System.Text.Json.JsonDocument.Parse(body); return body; }
-            catch { return "invalid body"; }
+            if (context.Arguments.Count == 0) return null;
+            var firstArg = context.Arguments[0];
+            if (firstArg is null) return null;
+
+            var t = firstArg.GetType();
+            if (firstArg is HttpContext or CancellationToken) return null;
+            if (t.Namespace?.StartsWith("Microsoft", StringComparison.Ordinal) == true) return null;
+            if (t.Namespace?.StartsWith("System",    StringComparison.Ordinal) == true) return null;
+
+            return System.Text.Json.JsonSerializer.Serialize(firstArg, t, CamelCaseOptions);
         }
         catch { return null; }
     }
@@ -593,11 +604,11 @@ Prefix `[HH:mm:ss]` do `appendLog()` tự thêm — không cần lặp lại.
 
 | # | Rủi ro | Mức | Mitigation |
 |---|---|---|---|
-| R1 | Body reading trong filter gây double-read → handler không parse được | Cao nếu quên `EnableBuffering()` | `TryReadBodyJsonAsync()` gọi `EnableBuffering()` trước, rewind `Body.Position = 0` sau read. Verify bằng unit test post JSON hợp lệ + kiểm tra handler nhận đúng payload. |
+| R1 | ~~Body reading trong filter gây double-read~~ [Resolved 2026-08-19 UI-001]: Bản đầu đọc raw stream trong filter — không hoạt động vì Minimal API đã consume body ở model-binding TRƯỚC filter chain → Parameters luôn null. Fix: serialize `context.Arguments[0]` (bound request DTO) thay vì đọc raw stream. Regression Test 8 reproduce empty-body + bound argument → Parameters ≠ null. | N/A sau fix | Fix commit `ae2a211`. Không còn cần `EnableBuffering()` vì không đọc stream nữa. |
 | R2 | Multipart/form-data hoặc body rất lớn → filter đọc tốn bộ nhớ | Thấp (2 API này chỉ nhận JSON < 200 bytes) | Không giới hạn ở filter, dựa vào Kestrel `MaxRequestBodySize` đã set 500MB (thừa an toàn cho 2 API). Có thể thêm size cap 8KB ở filter nếu QA phát hiện overhead. |
 | R3 | SignalR broadcast fail (no client, network drop) throw exception → response 500 | Trung bình | Service swallow exception + log warning (BR-G9). Unit test: mock hub throw → verify InsertAsync vẫn được gọi + response không đổi. |
 | R4 | SQLite lock contention khi concurrency cao | Thấp (P2, low request rate) | ADO.NET dùng WAL mặc định (chấp nhận). Nếu QA gặp `SQLITE_BUSY`, thêm `Cache=Shared;Pooling=True` vào connection string ở refactor sau. |
-| R5 | 401 log không có Parameters (body chưa parse) → khó debug | Chấp nhận (US-002 SC2 cho phép rỗng) | Filter vẫn thử đọc body trước khi vào chain → NHIỀU trường hợp 401 vẫn có Parameters (vì filter outer đọc body trước filter auth). Documented behavior. |
+| R5 | 401 log không có Parameters → khó debug | Chấp nhận (US-002 SC2 cho phép rỗng) | Sau fix UI-001: `context.Arguments[0]` đã được framework bind TRƯỚC filter chain — 401 vẫn có Parameters đầy đủ (verified: AddDevice 401 → `{"ip":"...","port":...}`). |
 | R6 | Log entry lớn qua SignalR → tăng network noise | Thấp | Truncate Parameters 1KB + ErrorMessage 500 → payload < 2KB/entry. Chấp nhận. |
 | R7 | ApiKeyEndpointFilter fail-safe (key rỗng → 401) tạo log spam khi container mới deploy | Thấp | Chấp nhận — đây là behavior đúng (US-002 SC2: log 401 phát hiện misconfig). Operator thấy 401 dồn dập ngay lập tức = signal config sai. |
 
@@ -629,7 +640,7 @@ Thay đổi bắt buộc trong CODE-GRAPH sau khi Senior Dev merge (STEP-2.1):
 | T2.1.2 | Tạo constants | `Services/ApiRequestLogConstants.cs` | 3 ApiName, 3 Result, 1 event name, 2 length cap |
 | T2.1.3 | Tạo `ApiRequestLogRepository` (ADO.NET, mirror `DeviceRepository`) | `Services/ApiRequestLogRepository.cs` | `Initialize()` chạy `CREATE TABLE IF NOT EXISTS` + `CREATE INDEX` |
 | T2.1.4 | Tạo `IApiRequestLogService` + impl `ApiRequestLogService` | `Services/IApiRequestLogService.cs`, `Services/ApiRequestLogService.cs` | Swallow exception + truncate |
-| T2.1.5 | Tạo `ApiRequestLoggingEndpointFilter` | `Endpoints/ApiRequestLoggingEndpointFilter.cs` | Chú ý `EnableBuffering()` + rewind body |
+| T2.1.5 | Tạo `ApiRequestLoggingEndpointFilter` | `Endpoints/ApiRequestLoggingEndpointFilter.cs` | Serialize `context.Arguments[0]` (bound DTO) — KHÔNG đọc raw body stream (đã bị model-binding consume) |
 | T2.1.6 | Đăng ký DI trong `Program.cs` | `Program.cs` | 3 dòng `AddSingleton`/`AddScoped` |
 | T2.1.7 | Gắn filter vào 2 endpoint (TRƯỚC `ApiKeyEndpointFilter`) | `Endpoints/DeviceConnectionEndpoints.cs`, `Endpoints/LaunchAppEndpoints.cs` | Chỉ thêm `.AddEndpointFilter<ApiRequestLoggingEndpointFilter>()` ở đúng 1 route mỗi file |
 | T2.1.8 | Unit test cho `ApiRequestLoggingEndpointFilter` | `tests/KztekAdbPublishTool.Web.Tests/` | Test: happy path, 401, exception → 500, body buffering |
