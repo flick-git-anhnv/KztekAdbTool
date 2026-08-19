@@ -1,7 +1,7 @@
 ---
 task: api-request-log
 created: 2026-08-19
-updated: 2026-08-19 13:49
+updated: 2026-08-19 13:55
 status: active
 workflow: WF-FEATURE
 priority: P2
@@ -47,8 +47,8 @@ Thêm tính năng ghi lịch sử mỗi request gọi vào 2 API mới có ApiKe
 |---|------|-------|--------|-----------|-----------------|
 | 2.1 | [∥ 2.2] Backend: entity, EF migration, service, inject vào 2 endpoints, SignalR broadcast | Senior Developer | ✅ | `steps/STEP-2.1-senior-dev-backend.md` | 2026-08-19 13:49 |
 | 2.2 | [∥ 2.1] Frontend JS: SignalR event handler mới, render log entry trong panel `#log` | Junior Developer | ✅ | `steps/STEP-2.2-junior-dev-frontend.md` | 2026-08-19 13:42 |
-| 2.3 | Code review cuối + merge decision (sau khi 2.1 + 2.2 đều xong; Senior Dev phải đính kèm /verify-pr report) | Tech Lead | ⬜ | `steps/STEP-2.3-tl-code-review.md` | - |
-| 2.4 | Security audit — conditional: có DB schema mới; dữ liệu không nhạy cảm; Tech Lead tự quyết có chạy stride không | Tech Lead | ⬜ | `steps/STEP-2.4-tl-security-audit.md` | - |
+| 2.3 | Code review cuối + merge decision (sau khi 2.1 + 2.2 đều xong; Senior Dev phải đính kèm /verify-pr report) | Tech Lead | ✅ | `steps/STEP-2.3-tl-code-review.md` | 2026-08-19 13:55 |
+| 2.4 | Security audit — conditional: có DB schema mới; dữ liệu không nhạy cảm; Tech Lead tự quyết có chạy stride không | Tech Lead | ⏭️ | `steps/STEP-2.4-tl-security-audit.md` | 2026-08-19 13:55 |
 
 ### Phase 3: Kiểm thử & Deploy
 
@@ -101,6 +101,8 @@ Không có
 | 2026-08-19 13:38 | STEP-1.5 Done — TDD 12 sections, 12 decisions chốt (D1-D12), sẵn cho 2.1 ∥ 2.2 chạy song song, commit 1b73bca | Tech Lead |
 | 2026-08-19 13:49 | STEP-2.1 Done — 6 file mới (entity/constants/repository/service/interface/filter), 3 file sửa (2 endpoint + Program.cs), 11 test mới, 84/84 pass, CODE-GRAPH cập nhật, commit 79ae3cf | Senior Developer |
 | 2026-08-19 13:42 | STEP-2.2 Done — JS handler ApiRequestLogged trong dashboard.js (+43 dòng), deviation đúng theo TDD (dashboard.js không phải signalr-client.js), syntax OK, commit d8abe37 | Junior Developer |
+| 2026-08-19 13:55 | STEP-2.3 Done — Code review PASS 12 hạng mục vs TDD, build 0/0, test 84/84 pass, APPROVED cả 2 PR (79ae3cf backend + d8abe37 frontend), không có code change từ TL | Tech Lead |
+| 2026-08-19 13:55 | STEP-2.4 Skipped — KHÔNG chạy STRIDE (không đụng auth/payment, DB schema chỉ INSERT parameterized, dữ liệu log không nhạy cảm, XSS-safe qua textContent); ghi backlog: cap body size 8KB ở filter khi go public | Tech Lead |
 
 ---
 **Status icons:** ⬜ Todo | 🔄 In Progress | ✅ Done | 🛑 Blocked | ⏭️ Skipped
