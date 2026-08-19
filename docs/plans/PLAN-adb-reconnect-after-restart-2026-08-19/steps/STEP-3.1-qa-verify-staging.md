@@ -205,8 +205,8 @@ Warm-up count = 1 (chỉ WiFi, không có USB)
 
 ## Commit
 
-- Hash: [điền sau khi commit]
-- Đã push: không (chưa commit — sẽ commit sau khi điền xong)
+- Hash: 582dacf
+- Đã push: có (origin/docker-deploy)
 
 ---
 **Status icons:** ⬜ Todo | 🔄 In Progress | ✅ Done | 🛑 Blocked | ⏭️ Skipped
