@@ -27,6 +27,8 @@ builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(optio
 
 // ── Services ─────────────────────────────────────────────────────────────────
 builder.Services.AddSingleton<AdbService>();
+// IAdbService → cùng instance AdbService (DevicePollWorker dùng interface để test được)
+builder.Services.AddSingleton<IAdbService>(sp => sp.GetRequiredService<AdbService>());
 builder.Services.AddSingleton<DeviceRepository>();
 builder.Services.AddSingleton<ApkManifestReader>();
 builder.Services.AddSingleton<PollControlService>(); // [STEP-2.5] điều khiển poll + trigger thủ công

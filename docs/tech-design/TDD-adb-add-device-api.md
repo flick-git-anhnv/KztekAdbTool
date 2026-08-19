@@ -348,6 +348,7 @@ public sealed class ConnectByIpRequest
 | R4 | Serial WiFi luôn dạng `ip:port` — nhưng nếu client truyền `ip:5555` vào path segment không encode → route matching có thể lỗi (`:` bị hiểu là separator trong 1 số proxy) | Thấp | Document rõ trong response API 1 rằng `serial` cần URL-encode khi dùng làm path param API 2 (`%3A` thay cho `:`). Test case QA cần cover. |
 | R5 | `adb connect` chạy đồng thời nhiều request cho cùng ip:port | Rất thấp | ADB tự idempotent (SC-A7). Không cần lock server-side. |
 | R6 | Attack vector: brute-force API key qua endpoint mới | Thấp | Filter đã dùng `CryptographicOperations.FixedTimeEquals` chống timing attack. Rate limiting ngoài scope (Non-goals PRD); nếu cần thì đặt ở reverse proxy. |
+| R7 | **[BUG FIX 2026-08-19]** Sau khi restart service, `DeviceState` rỗng cho đến khi `DevicePollWorker` poll lần đầu → `GET /api/devices/{serial}/status` trả 404 trong ~3s đầu dù thiết bị vẫn online | Trung bình (đặc biệt với WiFi devices — ADB daemon mới không có TCP session cũ) | **Đã fix:** Thêm `WarmUpReconnectAsync()` trong `DevicePollWorker.ExecuteAsync()` — đọc `DeviceRepository.GetAll()`, filter WiFi serial (chứa `:`), gọi `IAdbService.ConnectAsync()` cho từng device trước khi vào vòng poll chính. Best-effort: fail 1 device không block device khác. Timeout warm-up per-device: 5s (nhỏ hơn default 10s). Xem `BUG-adb-reconnect-after-restart.md`. |
 
 ---
 

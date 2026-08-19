@@ -26,7 +26,7 @@ public sealed class AdbDevice
 /// phát hiện thiết bị dùng polling "adb devices -l" định kỳ qua DevicePollWorker.
 /// Constructor nhận IOptions&lt;AdbSettings&gt; thay vì string trực tiếp để hỗ trợ DI.
 /// </summary>
-public sealed class AdbService
+public sealed class AdbService : IAdbService
 {
     private readonly string _adbPath;
 

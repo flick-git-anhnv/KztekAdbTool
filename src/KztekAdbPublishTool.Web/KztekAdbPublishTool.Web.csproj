@@ -11,4 +11,11 @@
     <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.8" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Cho phép test project truy cập internal members (WarmUpReconnectAsync) -->
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>KztekAdbPublishTool.Web.Tests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
 </Project>

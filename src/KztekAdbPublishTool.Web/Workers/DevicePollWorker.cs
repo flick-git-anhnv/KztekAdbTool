@@ -28,7 +28,7 @@ namespace KztekAdbPublishTool.Web.Workers;
 public sealed class DevicePollWorker : BackgroundService
 {
     private readonly ILogger<DevicePollWorker> _logger;
-    private readonly AdbService _adb;
+    private readonly IAdbService _adb;
     private readonly DeviceRepository _repo;
     private readonly DeviceState _deviceState;
     private readonly PollControlService _pollControl;
@@ -37,7 +37,7 @@ public sealed class DevicePollWorker : BackgroundService
 
     public DevicePollWorker(
         ILogger<DevicePollWorker> logger,
-        AdbService adb,
+        IAdbService adb,
         DeviceRepository repo,
         DeviceState deviceState,
         PollControlService pollControl,
@@ -56,6 +56,11 @@ public sealed class DevicePollWorker : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _logger.LogInformation("DevicePollWorker started. PollInterval={Ms}ms", _pollIntervalMs);
+
+        // Warm-up: gọi `adb connect` cho tất cả WiFi device đã persist trước khi poll lần đầu.
+        // Cần thiết vì ADB daemon mới (sau restart) không có TCP connection nào —
+        // `adb devices -l` sẽ trả rỗng nếu không reconnect trước.
+        await WarmUpReconnectAsync(stoppingToken);
 
         // Vòng đầu tiên: luôn poll ngay khi start, không phụ thuộc PollingEnabled.
         var manualTrigger = true;
@@ -77,6 +82,60 @@ public sealed class DevicePollWorker : BackgroundService
         }
 
         _logger.LogInformation("DevicePollWorker stopped.");
+    }
+
+    /// <summary>
+    /// Gọi `adb connect` cho từng WiFi device đã persist (serial chứa ':') ngay khi service start.
+    /// Best-effort: nếu 1 device fail (offline / network error) → log warning và tiếp tục device khác,
+    /// KHÔNG throw exception để không block vòng poll bình thường.
+    ///
+    /// Timeout per-device: 5s (thay vì 10s mặc định) để tránh startup chậm khi nhiều device offline.
+    /// </summary>
+    internal async Task WarmUpReconnectAsync(CancellationToken ct)
+    {
+        var persistedDevices = _repo.GetAll();
+        var wifiDevices = persistedDevices
+            .Where(d => d.Serial.Contains(':', StringComparison.Ordinal))
+            .ToList();
+
+        if (wifiDevices.Count == 0) return;
+
+        _logger.LogInformation(
+            "DevicePollWorker warm-up: reconnecting {Count} persisted WiFi device(s)...",
+            wifiDevices.Count);
+
+        foreach (var device in wifiDevices)
+        {
+            if (ct.IsCancellationRequested) break;
+
+            try
+            {
+                var result = await _adb.ConnectAsync(device.Serial, timeoutMs: 5000, ct: ct);
+
+                if (result.ExitCode == -1 && string.IsNullOrEmpty(result.StdOut))
+                {
+                    // ADB binary missing — không có điểm warm-up tiếp, dừng sớm.
+                    _logger.LogWarning(
+                        "DevicePollWorker warm-up skipped — adb binary not found: {StdErr}",
+                        result.StdErr);
+                    return;
+                }
+
+                _logger.LogInformation(
+                    "Warm-up connect {Serial}: {StdOut}",
+                    device.Serial, result.StdOut.Trim());
+            }
+            catch (OperationCanceledException)
+            {
+                break;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex,
+                    "Warm-up connect {Serial} failed — skipping, continuing with next device",
+                    device.Serial);
+            }
+        }
     }
 
     /// <summary>
