@@ -1,7 +1,7 @@
 ---
 task: adb-uninstall-before-install
 created: 2026-08-20
-updated: 2026-08-20 14:05
+updated: 2026-08-20 14:17
 status: active
 workflow: WF-FEATURE
 priority: P2
@@ -51,7 +51,7 @@ Thêm 1 checkbox trên Dashboard (`Index.cshtml`) cho phép user chọn có mu�
 
 | # | Bước | Agent | Status | Step file | Hoàn thành lúc |
 |---|------|-------|--------|-----------|-----------------|
-| 3.1 | Code: `UninstallApkAsync` trong AdbService/IAdbService, field `UninstallBeforeInstall` trong InstallRequest, logic uninstall-then-install trong `DoInstallAsync`, checkbox UI + JS | Senior Developer | ⬜ | `steps/STEP-3.1-senior-developer-code.md` | - |
+| 3.1 | Code: `UninstallApkAsync` trong AdbService/IAdbService, field `UninstallBeforeInstall` trong InstallRequest, logic uninstall-then-install trong `DoInstallAsync`, checkbox UI + JS | Senior Developer | ✅ | `steps/STEP-3.1-senior-developer-code.md` | 2026-08-20 14:17 |
 | 3.2 | Code review, quyết định merge | Tech Lead | ⬜ | `steps/STEP-3.2-tech-lead-review.md` | - |
 | 3.3 | Chạy app thật, chụp screenshot checkbox mới trên Dashboard, đánh giá C1–C7 | UX/UI Reviewer | ⬜ | `steps/STEP-3.3-uxr-review.md` | - |
 
@@ -100,6 +100,7 @@ Không có
 | 2026-08-20 13:55 | Bước 1.3 Done — RESOURCE tạo tại docs/planning/RESOURCE-adb-uninstall-before-install.md (Priority P2, Senior Dev, estimate 10–13h), commit 92dd32d | Engineering Manager |
 | 2026-08-20 13:58 | Bước 1.4 Done — SPRINT tạo tại docs/planning/SPRINT-adb-uninstall-before-install.md (8 task T-2.1→T-4.4, tất cả Todo), commit 4435cd0. **Phase 1 hoàn thành.** | Project Manager |
 | 2026-08-20 14:05 | Bước 2.1 Done — TDD tạo tại docs/tech-design/TDD-adb-uninstall-before-install.md (+ DOCX). Chốt 3 quyết định: **D1** lưu DB Settings key `UninstallBeforeInstall` (`"true"`/`"false"`, load qua `bool.TryParse` fallback false); **D2** LUÔN graceful — mọi lỗi uninstall log WARNING và tiếp tục install (dùng `Success && StdOut.Contains("Success")` chọn message SignalR, không dùng để quyết abort); **D3** MDM lock cũng graceful-skip (không rẽ nhánh riêng). Signature `UninstallApkAsync` KHÔNG vào `IAdbService`; percent SignalR shift 0/15/25/40/55/70/85/100 khi flag BẬT, giữ nguyên 0/20/40/60/80/100 khi TẮT. Commit 338d895 (local, chưa push). **Phase 2 hoàn thành.** | Tech Lead |
+| 2026-08-20 14:17 | Bước 3.1 Done — Code implement đầy đủ 7 file (AdbService+UninstallApkAsync, InstallCoordinator+shift-percent, InstallEndpoints+field, DeviceEndpoints+endpoint-settings, Index.cshtml.cs+property, Index.cshtml+checkbox, dashboard.js+3-handlers). 12 unit tests mới (UninstallBeforeInstallTests.cs). Build 0 error. Test 97/97 pass. CODE-GRAPH.md+.docx cập nhật. Commit c0565c3 (local, chưa push). | Senior Developer |
 
 ---
 **Status icons:** ⬜ Todo | 🔄 In Progress | ✅ Done | 🛑 Blocked | ⏭️ Skipped

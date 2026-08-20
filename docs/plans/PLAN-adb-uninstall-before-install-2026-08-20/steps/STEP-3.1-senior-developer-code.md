@@ -2,8 +2,8 @@
 step: 3.1
 plan: ../PLAN-MASTER.md
 agent: senior-developer
-status: todo
-completed_at:
+status: done
+completed_at: 2026-08-20 14:17
 deps: [2.1]
 ---
 
@@ -35,22 +35,42 @@ Implement đầy đủ feature theo TDD: thêm `UninstallApkAsync` vào `AdbServ
 - [ ] Cập nhật step file này + PLAN-MASTER.md status → ✅
 
 ## Đã làm
-[Điền sau khi hoàn thành]
+- **AdbService.cs**: Thêm `UninstallApkAsync(string serial, string packageName, CancellationToken ct = default)` — gọi `RunAsync($"-s {serial} uninstall {packageName}", timeoutMs: 30000)`. KHÔNG thêm vào `IAdbService.cs`.
+- **InstallCoordinator.cs**: Mở rộng `QueueInstalls`/`InstallOneAsync`/`DoInstallAsync` thêm param `bool uninstallBeforeInstall` (KHÔNG default). Block uninstall graceful: kiểm tra `Success && StdOut.Contains("Success", OrdinalIgnoreCase)` để chọn SignalR message; mọi lỗi log WARNING không abort. Shift percent: flag BẬT = 0/15/25/40/55/70/85/100; flag TẮT giữ nguyên 0/20/40/60/80/100 (giá trị mốc thay đổi, được xác nhận lại với TDD: pList=0→25, pInstall=20→40, pVerify=40→55, pVersion=60→70, pLaunch=80→85).
+- **InstallEndpoints.cs**: Thêm `InstallRequest.UninstallBeforeInstall` (bool, default false). Truyền vào `QueueInstalls`. Thêm field vào response Accepted.
+- **DeviceEndpoints.cs**: Endpoint `POST /api/settings/uninstall-before-install` + DTO `UninstallBeforeInstallSettingRequest(bool Enabled)` — lưu `"true"`/`"false"` vào DB Settings.
+- **Index.cshtml.cs**: Property `UninstallBeforeInstall { get; private set; }`. Load trong `OnGet()` bằng `bool.TryParse(...) && v` fallback false (EC5).
+- **Index.cshtml**: Checkbox `chk-uninstall-before-install` đặt ngay sau `chk-auto-detect` (hàng 3 toolbar), `form-check form-switch`, label "Gỡ cài đặt app trước khi cài".
+- **dashboard.js**: Change handler cho checkbox (gần txt-package blur handler ~dòng 452); 2 install handler (`btn-install-selected`, `btn-install-all`) thêm `uninstallBeforeInstall` vào payload.
+- **UninstallBeforeInstallTests.cs** (mới): 12 unit tests — 5 classify cases (real success/exit0-fail/exit1-fail/timeout/case-insensitive), 2 InstallRequest default/set, 2 endpoint repo logic, 3 IndexModel parse EC5.
+- **CODE-GRAPH.md + .docx**: Cập nhật entries AdbService, InstallCoordinator, DeviceEndpoints, InstallEndpoints, Pages/Index; thêm endpoint mới vào §2.3.
 
 ## Artifact
-[Điền sau khi hoàn thành]
+- `/home/duonghoang21/docker/KztekAdbTool/src/KztekAdbPublishTool.Web/Services/AdbService.cs`
+- `/home/duonghoang21/docker/KztekAdbTool/src/KztekAdbPublishTool.Web/Services/InstallCoordinator.cs`
+- `/home/duonghoang21/docker/KztekAdbTool/src/KztekAdbPublishTool.Web/Endpoints/InstallEndpoints.cs`
+- `/home/duonghoang21/docker/KztekAdbTool/src/KztekAdbPublishTool.Web/Endpoints/DeviceEndpoints.cs`
+- `/home/duonghoang21/docker/KztekAdbTool/src/KztekAdbPublishTool.Web/Pages/Index.cshtml.cs`
+- `/home/duonghoang21/docker/KztekAdbTool/src/KztekAdbPublishTool.Web/Pages/Index.cshtml`
+- `/home/duonghoang21/docker/KztekAdbTool/src/KztekAdbPublishTool.Web/wwwroot/js/dashboard.js`
+- `/home/duonghoang21/docker/KztekAdbTool/tests/KztekAdbPublishTool.Web.Tests/UninstallBeforeInstallTests.cs` (mới)
+- `/home/duonghoang21/docker/KztekAdbTool/code-graph/CODE-GRAPH.md` (updated)
+- `/home/duonghoang21/docker/KztekAdbTool/code-graph/CODE-GRAPH.docx` (updated)
 
 ## Quyết định quan trọng
-[Điền sau khi hoàn thành]
+- **Theo đúng TDD**: `UninstallApkAsync` KHÔNG vào `IAdbService` — khớp TDD Non-goals. Step file gốc ghi "thêm vào IAdbService" là sai (ghi trước TDD), đã bỏ qua theo hướng dẫn đầu task.
+- **Percent mốc xác nhận**: TDD chỉ định pInstall=40 (flag BẬT), xác nhận lại với table §DoInstallAsync — 0/20/40/60/80 → 0/15/25/40/55/70/85/100. Implement đúng table TDD.
+- **Build môi trường**: Local WSL thiếu `Microsoft.NETCore.App` runtime — build và test chạy qua Docker SDK container `mcr.microsoft.com/dotnet/sdk:8.0-jammy`. Result: 0 error, 97/97 test pass.
+- **CODE-GRAPH PDF**: Thất bại (xelatex không có trong môi trường) — DOCX đã xuất thành công. Ghi nhận theo §19.4 (PDF fail không block).
 
 ## Handoff Payload — bước sau đọc phần này (chỉ phần này, không cần đọc "Đã làm")
-- do_not_redo: Không có
-- watch_out: Không có
-- next_inputs: Không có
+- do_not_redo: KHÔNG thêm `UninstallApkAsync` vào `IAdbService.cs` (đây là quyết định chốt của TDD §Non-goals). KHÔNG đổi percent mốc khi flag TẮT (phải giữ nguyên 0/20/40/60/80/100 backward-compat).
+- watch_out: Build phải chạy qua Docker SDK (môi trường local thiếu `Microsoft.NETCore.App`). Test classify dùng `result.Success && StdOut.Contains("Success", OrdinalIgnoreCase)` — không dùng exit code đơn thuần (watch_out từ TDD §D2: exit code 0 + stdout "Failure [...]" phải là fail). CODE-GRAPH PDF không có (môi trường thiếu pdf engine), DOCX OK.
+- next_inputs: Files đã sửa: `AdbService.cs`, `InstallCoordinator.cs`, `InstallEndpoints.cs`, `DeviceEndpoints.cs`, `Index.cshtml.cs`, `Index.cshtml`, `dashboard.js`. Test mới: `UninstallBeforeInstallTests.cs` (12 tests). Build result: 0 error. Test result: 97/97 pass. Commit: c0565c3 (local, chưa push).
 
 ## Commit
-- Hash: [điền sau khi commit]
-- Đã push: [có/không]
+- Hash: c0565c3
+- Đã push: không
 
 ---
 **Status icons:** ⬜ Todo | 🔄 In Progress | ✅ Done | 🛑 Blocked | ⏭️ Skipped
