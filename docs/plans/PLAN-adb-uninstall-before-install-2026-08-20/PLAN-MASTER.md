@@ -1,7 +1,7 @@
 ---
 task: adb-uninstall-before-install
 created: 2026-08-20
-updated: 2026-08-20 13:51
+updated: 2026-08-20 13:55
 status: active
 workflow: WF-FEATURE
 priority: P2
@@ -38,7 +38,7 @@ Thêm 1 checkbox trên Dashboard (`Index.cshtml`) cho phép user chọn có mu�
 |---|------|-------|--------|-----------|-----------------|
 | 1.1 | Viết PRD phạm vi hẹp: mục tiêu, AC tổng quan, non-goals | Product Manager | ✅ | `steps/STEP-1.1-product-manager-prd.md` | 2026-08-20 13:47 |
 | 1.2 | Chi tiết hóa AC theo Given/When/Then, user story | Business Analyst | ✅ | `steps/STEP-1.2-business-analyst-ac.md` | 2026-08-20 13:51 |
-| 1.3 | Estimate resource, quyết định priority P2, phân bổ team (confirm Senior Dev) | Engineering Manager | ⬜ | `steps/STEP-1.3-engineering-manager-estimate.md` | - |
+| 1.3 | Estimate resource, quyết định priority P2, phân bổ team (confirm Senior Dev) | Engineering Manager | ✅ | `steps/STEP-1.3-engineering-manager-estimate.md` | 2026-08-20 13:55 |
 | 1.4 | Lên task board, sprint plan cho feature này | Project Manager | ⬜ | `steps/STEP-1.4-project-manager-sprint.md` | - |
 
 ### Phase 2: Thiết kế kỹ thuật
@@ -97,6 +97,7 @@ Không có
 | 2026-08-20 | Plan tạo mới | task-planner |
 | 2026-08-20 13:47 | Bước 1.1 Done — PRD tạo tại docs/prd/PRD-adb-uninstall-before-install.md, commit ece966f | Product Manager |
 | 2026-08-20 13:51 | Bước 1.2 Done — US tạo tại docs/user-stories/US-adb-uninstall-before-install.md (5 US, 13 scenario), commit 2f5b1e0 | Business Analyst |
+| 2026-08-20 13:55 | Bước 1.3 Done — RESOURCE tạo tại docs/planning/RESOURCE-adb-uninstall-before-install.md (Priority P2, Senior Dev, estimate 10–13h), commit 92dd32d | Engineering Manager |
 
 ---
 **Status icons:** ⬜ Todo | 🔄 In Progress | ✅ Done | 🛑 Blocked | ⏭️ Skipped
