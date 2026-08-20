@@ -12,6 +12,7 @@ public class IndexModel : PageModel
     public List<DeviceRecord> Devices { get; private set; } = new();
     public string PackageName { get; private set; } = string.Empty;
     public string ApkPath { get; private set; } = string.Empty;
+    public bool UninstallBeforeInstall { get; private set; }
 
     public IndexModel(DeviceRepository repo, ILogger<IndexModel> logger)
     {
@@ -24,5 +25,7 @@ public class IndexModel : PageModel
         Devices = _repo.GetAll();
         PackageName = _repo.GetSetting("PackageName") ?? string.Empty;
         ApkPath = _repo.GetSetting("ApkPath") ?? string.Empty;
+        // EC5: fallback false nếu key chưa có / parse thất bại
+        UninstallBeforeInstall = bool.TryParse(_repo.GetSetting("UninstallBeforeInstall"), out var v) && v;
     }
 }

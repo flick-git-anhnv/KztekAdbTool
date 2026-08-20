@@ -131,6 +131,15 @@ public static class DeviceEndpoints
             return Results.Ok(new { ok = true, enabled = req.Enabled });
         });
 
+        // ── POST /api/settings/uninstall-before-install ──────────────────────────
+        app.MapPost("/api/settings/uninstall-before-install", (
+            UninstallBeforeInstallSettingRequest req,
+            DeviceRepository repo) =>
+        {
+            repo.SetSetting("UninstallBeforeInstall", req.Enabled ? "true" : "false");
+            return Results.Ok(new { ok = true, enabled = req.Enabled });
+        });
+
         return app;
     }
 
@@ -145,3 +154,4 @@ public sealed record ConnectBatchRequest(string[] IpPorts);
 public sealed record RemoveRequest(string[] Serials);
 public sealed record PackageSettingRequest(string PackageName);
 public sealed record PollingToggleRequest(bool Enabled);
+public sealed record UninstallBeforeInstallSettingRequest(bool Enabled);

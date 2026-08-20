@@ -81,6 +81,16 @@
                 <label class="form-check-label small" for="chk-auto-detect">Tự động phát hiện thiết bị</label>
             </div>
         </div>
+        <div class="col-auto ms-2">
+            <div class="form-check form-switch mb-0">
+                <input class="form-check-input" type="checkbox"
+                       id="chk-uninstall-before-install"
+                       @(Model.UninstallBeforeInstall ? "checked" : "")>
+                <label class="form-check-label small" for="chk-uninstall-before-install">
+                    Gỡ cài đặt app trước khi cài
+                </label>
+            </div>
+        </div>
     </div>
 </div>
 

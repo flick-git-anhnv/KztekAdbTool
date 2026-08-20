@@ -57,7 +57,7 @@ public static class InstallEndpoints
             if (string.IsNullOrEmpty(apkPath) || !File.Exists(apkPath))
                 return Results.BadRequest(new { error = "File APK không tồn tại. Vui lòng upload APK trước." });
 
-            var queued = coordinator.QueueInstalls(validSerials, packageName, apkPath);
+            var queued = coordinator.QueueInstalls(validSerials, packageName, apkPath, req.UninstallBeforeInstall);
             logger.LogInformation("Install queued for {Count} device(s): {Serials}",
                 queued, string.Join(", ", validSerials));
 
@@ -66,7 +66,8 @@ public static class InstallEndpoints
                 queued,
                 serials = validSerials,
                 packageName,
-                apkPath
+                apkPath,
+                uninstallBeforeInstall = req.UninstallBeforeInstall
             });
         });
 
@@ -88,4 +89,7 @@ public sealed class InstallRequest
 
     /// <summary>Đường dẫn APK override. Nếu null → lấy từ DB Settings.</summary>
     public string? ApkPath { get; set; }
+
+    /// <summary>Khi true → chạy adb uninstall trước adb install. Mặc định false (giữ hành vi cũ).</summary>
+    public bool UninstallBeforeInstall { get; set; }
 }

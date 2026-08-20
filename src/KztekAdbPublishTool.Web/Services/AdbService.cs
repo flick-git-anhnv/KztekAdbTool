@@ -194,6 +194,14 @@ public sealed class AdbService : IAdbService
     }
 
     /// <summary>
+    /// Gỡ cài đặt package trên thiết bị. LUÔN được coi là graceful ở tầng caller —
+    /// caller (InstallCoordinator) chỉ dùng result để chọn message SignalR + log,
+    /// không abort luồng install dù uninstall thất bại. Xem TDD-adb-uninstall-before-install §D2.
+    /// </summary>
+    public Task<AdbCommandResult> UninstallApkAsync(string serial, string packageName, CancellationToken ct = default)
+        => RunAsync($"-s {serial} uninstall {packageName}", timeoutMs: 30000, ct: ct);
+
+    /// <summary>
     /// Trả về versionName của package trên thiết bị, hoặc null nếu chưa cài / không đọc được.
     /// </summary>
     public async Task<string?> GetPackageVersionAsync(string serial, string packageName, CancellationToken ct = default)

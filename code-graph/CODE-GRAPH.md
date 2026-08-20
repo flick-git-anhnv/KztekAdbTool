@@ -1,7 +1,7 @@
 ---
 project: KztekAdbPublishTool (multi-project solution)
-last_updated: 2026-08-19
-updated_by: Senior Developer (api-request-log STEP-2.1)
+last_updated: 2026-08-20
+updated_by: Senior Developer (adb-uninstall-before-install STEP-3.1)
 ---
 
 # CODE-GRAPH — KztekAdbPublishTool Solution
@@ -17,6 +17,7 @@ updated_by: Senior Developer (api-request-log STEP-2.1)
 | 2026-08-19 | Senior Developer | BUG-adb-reconnect: Thêm `IAdbService` interface; `AdbService : IAdbService`; `DevicePollWorker` dùng `IAdbService` + thêm `WarmUpReconnectAsync()` (internal); `Program.cs` đăng ký `IAdbService`; thêm 6 unit tests `DevicePollWorkerWarmUpTests` |
 | 2026-08-19 | Senior Developer | BUG-adb-reconnect STEP-2.3: `AdbService.RunAsync` — re-throw OCE khi `ct.IsCancellationRequested` (phân biệt per-device timeout vs service shutdown); `WarmUpReconnectAsync` — fix logic ExitCode!= 0 → continue (không return/break), fix catch OCE → check ct, fix log message; thêm 2 unit tests (TimeoutOnSerial + OceOnSerial) |
 | 2026-08-19 | Senior Developer | api-request-log STEP-2.1: Thêm `Models/ApiRequestLogEntry`, `Services/ApiRequestLogConstants`, `Services/ApiRequestLogRepository` (raw ADO.NET SQLite), `Services/IApiRequestLogService` + `ApiRequestLogService` (ghi DB + broadcast SignalR `ApiRequestLogged`), `Endpoints/ApiRequestLoggingEndpointFilter` (OUTER filter bắt 401); gắn filter vào `LaunchAppEndpoints` + `DeviceConnectionEndpoints` POST route; đăng ký DI trong `Program.cs`; thêm 11 unit tests |
+| 2026-08-20 | Senior Developer | adb-uninstall-before-install STEP-3.1: Thêm `AdbService.UninstallApkAsync` (KHÔNG vào IAdbService); mở rộng `InstallCoordinator.QueueInstalls`/`InstallOneAsync`/`DoInstallAsync` (+param `uninstallBeforeInstall`, shift percent SignalR 0/15/25/40/55/70/85/100); thêm `InstallRequest.UninstallBeforeInstall`; thêm endpoint `POST /api/settings/uninstall-before-install` + DTO `UninstallBeforeInstallSettingRequest` vào `DeviceEndpoints.cs`; `IndexModel` load `UninstallBeforeInstall` từ DB; checkbox UI `chk-uninstall-before-install` (Index.cshtml hàng 3); dashboard.js change handler + 2 install handler truyền flag. Thêm 12 unit tests (`UninstallBeforeInstallTests`). |
 
 ---
 
@@ -41,7 +42,7 @@ src/KztekAdbPublishTool.Web/
 ├── Endpoints/
 │   ├── ApkEndpoints.cs             ← POST /api/apk/upload, DELETE /api/apk
 │   ├── DeviceConnectionEndpoints.cs← POST /api/devices/connect-by-ip (filter: ApiRequestLoggingEndpointFilter OUTER + ApiKeyEndpointFilter), GET /api/devices/{serial}/status [adb-add-device-api; STEP-2.1]
-│   ├── DeviceEndpoints.cs          ← POST /api/devices/{connect,connect-batch,remove,poll}, GET /api/devices, POST /api/settings/package, /api/polling/toggle
+│   ├── DeviceEndpoints.cs          ← POST /api/devices/{connect,connect-batch,remove,poll}, GET /api/devices, POST /api/settings/package, /api/settings/uninstall-before-install, /api/polling/toggle [+endpoint STEP-3.1 adb-uninstall-before-install]
 │   ├── HealthEndpoints.cs          ← GET /health
 │   ├── InstallEndpoints.cs         ← POST /api/install
 │   ├── LaunchAppEndpoints.cs       ← POST /api/launch-app (filter: ApiRequestLoggingEndpointFilter OUTER + ApiKeyEndpointFilter) [STEP-2.1]
@@ -60,10 +61,10 @@ src/KztekAdbPublishTool.Web/
 │       └── _Layout.cshtml          ← Bootstrap 5 local, navbar KZTEK brand (Navy/Cam)
 ├── Services/
 │   ├── IAdbService.cs              ← Interface: GetDevicesAsync/ConnectAsync/GetPackageVersionAsync (testability)
-│   ├── AdbService.cs               ← Singleton; implement IAdbService; wrap adb binary; GetDevices/Connect/Install/LaunchApp/GetVersion
+│   ├── AdbService.cs               ← Singleton; implement IAdbService; wrap adb binary; GetDevices/Connect/Install/LaunchApp/GetVersion/UninstallApkAsync [STEP-3.1 adb-uninstall-before-install]
 │   ├── ApkManifestReader.cs        ← Singleton; parse AXML từ .apk; stateless
 │   ├── DeviceRepository.cs         ← Singleton; SQLite CRUD (Upsert/Remove/GetAll/GetSetting/SetSetting/UpdateInstallResult)
-│   ├── InstallCoordinator.cs       ← Singleton; queue install per-device (SemaphoreSlim(1)), global (SemaphoreSlim(4))
+│   ├── InstallCoordinator.cs       ← Singleton; queue install per-device (SemaphoreSlim(1)), global (SemaphoreSlim(4)); QueueInstalls+param `uninstallBeforeInstall` [STEP-3.1 adb-uninstall-before-install]
 │   ├── PollControlService.cs       ← Singleton; PollingEnabled flag + TriggerAsync (manual poll trigger)
 │   ├── ScanCoordinator.cs          ← Singleton; TCP probe scan (SemaphoreSlim(24), max 512 IP, timeout 1200ms)
 │   ├── ScanRangeParser.cs          ← Static; parse IP range string → List<string> IPs
@@ -96,10 +97,10 @@ src/KztekAdbPublishTool.Web/
 | `Configuration/AdbSettings` | — | Program.cs, AdbService, DeviceRepository, DevicePollWorker | CONFIRMED | 2026-08-10 |
 | `Configuration/LaunchAppSettings` | — | Program.cs, ApiKeyEndpointFilter | CONFIRMED | 2026-08-18 |
 | `Services/IAdbService` | — | DevicePollWorker (interface dep), AdbService (implements) | CONFIRMED | 2026-08-19 |
-| `Services/AdbService` | IOptions\<AdbSettings\>, System.Diagnostics.Process, **IAdbService** | DevicePollWorker (via IAdbService), InstallCoordinator, LaunchAppEndpoints, DeviceConnectionEndpoints, HealthEndpoints | CONFIRMED | 2026-08-19 |
+| `Services/AdbService` | IOptions\<AdbSettings\>, System.Diagnostics.Process, **IAdbService** | DevicePollWorker (via IAdbService), InstallCoordinator, LaunchAppEndpoints, DeviceConnectionEndpoints, HealthEndpoints | CONFIRMED | 2026-08-20 |
 | `Services/DeviceRepository` | IOptions\<AdbSettings\>, Microsoft.Data.Sqlite, Models/DeviceRecord | DevicePollWorker, DeviceEndpoints, InstallEndpoints, ApkEndpoints, InstallCoordinator | CONFIRMED | 2026-08-10 |
 | `Services/ApkManifestReader` | System.IO.Compression | ApkEndpoints | CONFIRMED | 2026-08-10 |
-| `Services/InstallCoordinator` | AdbService, DeviceRepository, DeviceState, IHubContext\<DeviceHub\> | InstallEndpoints | CONFIRMED | 2026-08-10 |
+| `Services/InstallCoordinator` | AdbService, DeviceRepository, DeviceState, IHubContext\<DeviceHub\> | InstallEndpoints | CONFIRMED | 2026-08-20 |
 | `Services/PollControlService` | — | DevicePollWorker, DeviceEndpoints, DeviceConnectionEndpoints | CONFIRMED | 2026-08-19 |
 | `Services/ScanCoordinator` | IHubContext\<DeviceHub\>, ScanRangeParser | ScanEndpoints | CONFIRMED | 2026-08-10 |
 | `Services/ScanRangeParser` | — | ScanCoordinator | CONFIRMED | 2026-08-10 |
@@ -116,12 +117,12 @@ src/KztekAdbPublishTool.Web/
 | `Services/ApiRequestLogRepository` | IOptions\<AdbSettings\>, Microsoft.Data.Sqlite, Models/ApiRequestLogEntry | ApiRequestLogService | CONFIRMED | 2026-08-19 |
 | `Services/IApiRequestLogService` | — | ApiRequestLoggingEndpointFilter (dep), ApiRequestLogService (implements) | CONFIRMED | 2026-08-19 |
 | `Services/ApiRequestLogService` | ApiRequestLogRepository, IHubContext\<DeviceHub\>, IApiRequestLogService, ILogger | ApiRequestLoggingEndpointFilter (via IApiRequestLogService) | CONFIRMED | 2026-08-19 |
-| `Endpoints/DeviceEndpoints` | DeviceRepository, DeviceState, AdbService, PollControlService | Program.cs (MapDeviceEndpoints) | CONFIRMED | 2026-08-10 |
-| `Endpoints/InstallEndpoints` | DeviceState, DeviceRepository, InstallCoordinator | Program.cs (MapInstallEndpoints) | CONFIRMED | 2026-08-10 |
+| `Endpoints/DeviceEndpoints` | DeviceRepository, DeviceState, AdbService, PollControlService | Program.cs (MapDeviceEndpoints) | CONFIRMED | 2026-08-20 |
+| `Endpoints/InstallEndpoints` | DeviceState, DeviceRepository, InstallCoordinator | Program.cs (MapInstallEndpoints) | CONFIRMED | 2026-08-20 |
 | `Endpoints/ScanEndpoints` | ScanCoordinator | Program.cs (MapScanEndpoints) | CONFIRMED | 2026-08-10 |
 | `Endpoints/ApkEndpoints` | IOptions\<AdbSettings\>, ApkManifestReader, DeviceRepository | Program.cs (MapApkEndpoints) | CONFIRMED | 2026-08-10 |
 | `Endpoints/HealthEndpoints` | — | Program.cs (MapHealthEndpoints) | CONFIRMED | 2026-08-10 |
-| `Pages/Index` | IndexModel : PageModel | Router (/) | CONFIRMED | 2026-08-10 |
+| `Pages/Index` | IndexModel : PageModel | Router (/) | CONFIRMED | 2026-08-20 |
 | `wwwroot/js/signalr-client.js` | signalr.min.js (local lib) | _Layout.cshtml | CONFIRMED | 2026-08-10 |
 | `wwwroot/js/dashboard.js` | signalr-client.js, bootstrap.bundle.min.js (local) | _Layout.cshtml | CONFIRMED | 2026-08-10 |
 | `wwwroot/js/scan-modal.js` | signalr-client.js | _Layout.cshtml | CONFIRMED | 2026-08-10 |
@@ -143,6 +144,7 @@ src/KztekAdbPublishTool.Web/
 | POST | `/api/devices/remove` | DeviceEndpoints → **DeviceState** + DeviceRepository | ✅ Bug R9 fixed 2026-08-10 |
 | GET | `/api/devices` | DeviceEndpoints → DeviceRepository | ✅ |
 | POST | `/api/settings/package` | DeviceEndpoints → DeviceRepository | ✅ |
+| POST | `/api/settings/uninstall-before-install` | DeviceEndpoints → DeviceRepository | ✅ STEP-3.1 2026-08-20 |
 | POST | `/api/polling/toggle` | DeviceEndpoints → PollControlService + DeviceRepository | ✅ |
 | POST | `/api/devices/poll` | DeviceEndpoints → PollControlService.TriggerAsync | ✅ |
 | POST | `/api/launch-app` | LaunchAppEndpoints → ApiKeyEndpointFilter → DeviceState → AdbService | ✅ STEP-3.1 2026-08-18 |

@@ -448,6 +448,18 @@
             });
         }
 
+        // Uninstall before install toggle → save setting immediately
+        const chkUninstall = $id('chk-uninstall-before-install');
+        if (chkUninstall) {
+            chkUninstall.addEventListener('change', async function () {
+                try {
+                    await apiPost('/api/settings/uninstall-before-install', { enabled: chkUninstall.checked });
+                } catch (ex) {
+                    appendLog('Lỗi lưu tuỳ chọn uninstall: ' + ex.message);
+                }
+            });
+        }
+
         // Package input blur → save (only when non-empty — mirrors WinForms Leave handler)
         const txtPackage = $id('txt-package');
         if (txtPackage) {
@@ -477,7 +489,8 @@
                 if (lbl) lbl.textContent = 'Đang cài đặt...';
                 appendLog('Bắt đầu cài cho ' + serials.length + ' thiết bị đã chọn...');
                 try {
-                    const r = await apiPost('/api/install', { serials: serials, selectedOnly: true });
+                    const uninstallBeforeInstall = $id('chk-uninstall-before-install')?.checked === true;
+                    const r = await apiPost('/api/install', { serials: serials, selectedOnly: true, uninstallBeforeInstall: uninstallBeforeInstall });
                     if (!r.ok) {
                         const txt = await r.text();
                         appendLog('Lỗi cài đặt: ' + txt);
@@ -500,7 +513,8 @@
                 appendLog('Bắt đầu cài cho tất cả thiết bị Online...');
                 try {
                     // serials: [] + selectedOnly: false → backend cài tất cả Online
-                    const r = await apiPost('/api/install', { serials: [], selectedOnly: false });
+                    const uninstallBeforeInstall = $id('chk-uninstall-before-install')?.checked === true;
+                    const r = await apiPost('/api/install', { serials: [], selectedOnly: false, uninstallBeforeInstall: uninstallBeforeInstall });
                     if (!r.ok) {
                         const txt = await r.text();
                         appendLog('Lỗi cài đặt: ' + txt);

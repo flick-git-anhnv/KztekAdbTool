@@ -47,20 +47,21 @@ public sealed class InstallCoordinator
     /// Fire-and-forget: queue install cho từng serial. Trả về số serial được queue.
     /// Caller không cần await — tiến độ sẽ được push qua SignalR.
     /// </summary>
-    public int QueueInstalls(IEnumerable<string> serials, string packageName, string apkPath)
+    /// <param name="uninstallBeforeInstall">Khi true → chạy adb uninstall trước adb install. KHÔNG có default — caller phải khai báo rõ.</param>
+    public int QueueInstalls(IEnumerable<string> serials, string packageName, string apkPath, bool uninstallBeforeInstall)
     {
         var count = 0;
         foreach (var serial in serials)
         {
             // Capture loop variable
             var s = serial;
-            _ = Task.Run(() => InstallOneAsync(s, packageName, apkPath));
+            _ = Task.Run(() => InstallOneAsync(s, packageName, apkPath, uninstallBeforeInstall));
             count++;
         }
         return count;
     }
 
-    private async Task InstallOneAsync(string serial, string packageName, string apkPath)
+    private async Task InstallOneAsync(string serial, string packageName, string apkPath, bool uninstallBeforeInstall)
     {
         // Bước 1: lấy (hoặc tạo) per-device semaphore → đảm bảo chỉ 1 install/device
         var deviceSem = _perDevice.GetOrAdd(serial, _ => new SemaphoreSlim(1, 1));
@@ -72,7 +73,7 @@ public sealed class InstallCoordinator
             await _global.WaitAsync();
             try
             {
-                await DoInstallAsync(serial, packageName, apkPath);
+                await DoInstallAsync(serial, packageName, apkPath, uninstallBeforeInstall);
             }
             finally
             {
@@ -85,7 +86,7 @@ public sealed class InstallCoordinator
         }
     }
 
-    private async Task DoInstallAsync(string serial, string packageName, string apkPath)
+    private async Task DoInstallAsync(string serial, string packageName, string apkPath, bool uninstallBeforeInstall)
     {
         // Timeout tổng 10 phút — ADB command đã có timeout riêng, đây là safety net
         using var timeoutCts = new CancellationTokenSource(TimeSpan.FromMinutes(10));
@@ -93,12 +94,46 @@ public sealed class InstallCoordinator
 
         try
         {
+            // ── BƯỚC MỚI: Uninstall (chỉ khi flag BẬT + có packageName) ─────────────
+            if (uninstallBeforeInstall && !string.IsNullOrWhiteSpace(packageName))
+            {
+                await _hub.Clients.All.SendAsync("InstallProgress", serial, 0,
+                    $"Đang gỡ cài đặt {packageName}...");
+
+                var uninstallResult = await _adb.UninstallApkAsync(serial, packageName, ct);
+                var isRealSuccess = uninstallResult.Success
+                    && uninstallResult.StdOut.Contains("Success", StringComparison.OrdinalIgnoreCase);
+
+                if (isRealSuccess)
+                {
+                    _logger.LogInformation("Uninstall {Package} trên {Serial} thành công", packageName, serial);
+                    await _hub.Clients.All.SendAsync("InstallProgress", serial, 15,
+                        $"Đã gỡ cài đặt {packageName}");
+                }
+                else
+                {
+                    // D2 + D3: LUÔN graceful. Log warning kèm StdOut/StdErr; KHÔNG abort.
+                    _logger.LogWarning(
+                        "Uninstall {Package} trên {Serial} không thành công (vẫn tiếp tục install). StdOut={StdOut} StdErr={StdErr}",
+                        packageName, serial, uninstallResult.StdOut.Trim(), uninstallResult.StdErr.Trim());
+                    await _hub.Clients.All.SendAsync("InstallProgress", serial, 15,
+                        "Bỏ qua gỡ (chưa cài hoặc bị chặn)");
+                }
+            }
+
+            // ── LUỒNG CŨ giữ nguyên logic, chỉ percent shift khi flag BẬT ───────────
+            int pList    = uninstallBeforeInstall ? 25 : 0;
+            int pInstall = uninstallBeforeInstall ? 40 : 20;
+            int pVerify  = uninstallBeforeInstall ? 55 : 40;
+            int pVersion = uninstallBeforeInstall ? 70 : 60;
+            int pLaunch  = uninstallBeforeInstall ? 85 : 80;
+
             // FIX-3.1b: gửi primitive args thay vì anonymous object để khớp JS:
             //   InstallProgress(string serial, int percent, string msg)  — percent 0-100
-            await _hub.Clients.All.SendAsync("InstallProgress", serial, 0,  "Đang lấy danh sách package...");
+            await _hub.Clients.All.SendAsync("InstallProgress", serial, pList, "Đang lấy danh sách package...");
             var before = await _adb.ListThirdPartyPackagesAsync(serial, ct);
 
-            await _hub.Clients.All.SendAsync("InstallProgress", serial, 20, "Đang cài APK...");
+            await _hub.Clients.All.SendAsync("InstallProgress", serial, pInstall, "Đang cài APK...");
             var installResult = await _adb.InstallApkAsync(serial, apkPath, ct);
 
             if (!installResult.Success)
@@ -108,16 +143,16 @@ public sealed class InstallCoordinator
                 return;
             }
 
-            await _hub.Clients.All.SendAsync("InstallProgress", serial, 40, "Đang kiểm tra kết quả...");
+            await _hub.Clients.All.SendAsync("InstallProgress", serial, pVerify, "Đang kiểm tra kết quả...");
             var after = await _adb.ListThirdPartyPackagesAsync(serial, ct);
 
             // Tìm package vừa được cài (so sánh before/after)
             var installedPkg = after.Except(before).FirstOrDefault() ?? packageName;
 
-            await _hub.Clients.All.SendAsync("InstallProgress", serial, 60, "Đang lấy version...");
+            await _hub.Clients.All.SendAsync("InstallProgress", serial, pVersion, "Đang lấy version...");
             var version = await _adb.GetPackageVersionAsync(serial, installedPkg, ct);
 
-            await _hub.Clients.All.SendAsync("InstallProgress", serial, 80, "Đang mở ứng dụng...");
+            await _hub.Clients.All.SendAsync("InstallProgress", serial, pLaunch, "Đang mở ứng dụng...");
             var launchResult = await _adb.LaunchAppAsync(serial, installedPkg, ct);
             if (!launchResult.Success)
             {
