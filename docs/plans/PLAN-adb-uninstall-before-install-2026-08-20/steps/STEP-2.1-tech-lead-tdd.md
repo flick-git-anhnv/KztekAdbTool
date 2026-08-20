@@ -76,7 +76,7 @@ Viết Technical Design Document chốt các điểm thiết kế sau: (1) signa
   - **CODE-GRAPH:** cập nhật entry `InstallCoordinator` (signature đổi), `AdbService` (thêm method), `DeviceEndpoints` (thêm endpoint) — theo §17.2. Confidence label CONFIRMED sau khi đọc trực tiếp code đã sửa.
 
 ## Commit
-- Hash: [sẽ điền sau khi commit]
+- Hash: 338d895
 - Đã push: không (theo tiền lệ)
 
 ---
