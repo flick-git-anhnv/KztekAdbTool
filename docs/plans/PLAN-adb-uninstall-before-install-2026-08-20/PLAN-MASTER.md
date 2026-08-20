@@ -1,7 +1,7 @@
 ---
 task: adb-uninstall-before-install
 created: 2026-08-20
-updated: 2026-08-20 14:21
+updated: 2026-08-20 14:33
 status: active
 workflow: WF-FEATURE
 priority: P2
@@ -53,7 +53,7 @@ Thêm 1 checkbox trên Dashboard (`Index.cshtml`) cho phép user chọn có mu�
 |---|------|-------|--------|-----------|-----------------|
 | 3.1 | Code: `UninstallApkAsync` trong AdbService/IAdbService, field `UninstallBeforeInstall` trong InstallRequest, logic uninstall-then-install trong `DoInstallAsync`, checkbox UI + JS | Senior Developer | ✅ | `steps/STEP-3.1-senior-developer-code.md` | 2026-08-20 14:17 |
 | 3.2 | Code review, quyết định merge | Tech Lead | ✅ | `steps/STEP-3.2-tech-lead-review.md` | 2026-08-20 14:21 |
-| 3.3 | Chạy app thật, chụp screenshot checkbox mới trên Dashboard, đánh giá C1–C7 | UX/UI Reviewer | ⬜ | `steps/STEP-3.3-uxr-review.md` | - |
+| 3.3 | Chạy app thật, chụp screenshot checkbox mới trên Dashboard, đánh giá C1–C7 | UX/UI Reviewer | ✅ | `steps/STEP-3.3-uxr-review.md` | 2026-08-20 14:33 |
 
 ### Phase 4: Kiểm thử & Deploy
 
@@ -102,6 +102,7 @@ Không có
 | 2026-08-20 14:05 | Bước 2.1 Done — TDD tạo tại docs/tech-design/TDD-adb-uninstall-before-install.md (+ DOCX). Chốt 3 quyết định: **D1** lưu DB Settings key `UninstallBeforeInstall` (`"true"`/`"false"`, load qua `bool.TryParse` fallback false); **D2** LUÔN graceful — mọi lỗi uninstall log WARNING và tiếp tục install (dùng `Success && StdOut.Contains("Success")` chọn message SignalR, không dùng để quyết abort); **D3** MDM lock cũng graceful-skip (không rẽ nhánh riêng). Signature `UninstallApkAsync` KHÔNG vào `IAdbService`; percent SignalR shift 0/15/25/40/55/70/85/100 khi flag BẬT, giữ nguyên 0/20/40/60/80/100 khi TẮT. Commit 338d895 (local, chưa push). **Phase 2 hoàn thành.** | Tech Lead |
 | 2026-08-20 14:17 | Bước 3.1 Done — Code implement đầy đủ 7 file (AdbService+UninstallApkAsync, InstallCoordinator+shift-percent, InstallEndpoints+field, DeviceEndpoints+endpoint-settings, Index.cshtml.cs+property, Index.cshtml+checkbox, dashboard.js+3-handlers). 12 unit tests mới (UninstallBeforeInstallTests.cs). Build 0 error. Test 97/97 pass. CODE-GRAPH.md+.docx cập nhật. Commit c0565c3 (local, chưa push). | Senior Developer |
 | 2026-08-20 14:21 | Bước 3.2 Done — Tech Lead APPROVE commit c0565c3. Review 7/7 mục pass (correctness, backward-compat percent 0/20/40/60/80/100 khi flag TẮT, QueueInstalls signature 1 callsite duy nhất, UI checkbox đúng vị trí hàng 3 toolbar, JS payload 3 handler đúng endpoint mới, test coverage 12 test đủ 2 case classify mấu chốt, verify Docker SDK 97/97 pass). Không REQUEST CHANGES. Không có commit sửa mới — commit `c0565c3` giữ nguyên. | Tech Lead |
+| 2026-08-20 14:33 | Bước 3.3 Done — UX/UI Reviewer PASS. C1–C7 tất cả pass. Persist state PASS. Không có issue. Commit 01ab012 (local). **Phase 3 hoàn thành.** | UX/UI Reviewer |
 
 ---
 **Status icons:** ⬜ Todo | 🔄 In Progress | ✅ Done | 🛑 Blocked | ⏭️ Skipped
