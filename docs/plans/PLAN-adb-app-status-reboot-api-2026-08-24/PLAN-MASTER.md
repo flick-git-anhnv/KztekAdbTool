@@ -1,7 +1,7 @@
 ---
 task: adb-app-status-reboot-api
 created: 2026-08-24
-updated: 2026-08-24
+updated: 2026-08-24 22:40
 status: in-progress
 last_step: 2.1
 workflow: WF-FEATURE
@@ -60,7 +60,7 @@ Cả 2 API tái dùng `ApiKeyEndpointFilter` + `ApiRequestLoggingEndpointFilter`
 
 | # | Bước | Agent | Status | Step file | Hoàn thành lúc |
 |---|------|-------|--------|-----------|-----------------|
-| 3.1 | Code AdbService methods + 2 endpoint + UI buttons (Index.cshtml + dashboard.js) + unit tests + cập nhật CODE-GRAPH | Senior Developer | ⬜ | `steps/STEP-3.1-senior-developer-code.md` | — |
+| 3.1 | Code AdbService methods + 2 endpoint + UI buttons (Index.cshtml + dashboard.js) + unit tests + cập nhật CODE-GRAPH | Senior Developer | ✅ | `steps/STEP-3.1-senior-developer-code.md` | 2026-08-24 22:40 |
 | 3.2 | Code review PR, security-audit-stride (kiểm tra reboot command), quyết định merge | Tech Lead | ⬜ | `steps/STEP-3.2-tech-lead-review.md` | — |
 | 3.3 | Chạy app thật, chụp screenshot 2 nút mới, đánh giá C1–C7 UX | UX/UI Reviewer | ⬜ | `steps/STEP-3.3-ux-ui-reviewer.md` | — |
 
@@ -134,6 +134,7 @@ Không có
 | 2026-08-24 | Plan tạo mới | task-planner |
 | 2026-08-24 | User duyệt plan phương án rút gọn — Phase 1 (1.1–1.4) đánh dấu ⏭️ Skipped, bắt đầu từ Bước 2.1 | Dispatcher |
 | 2026-08-24 22:28 | Bước 2.1 Done — TDD hoàn chỉnh (13 mục, 9 quyết định chốt, task breakdown 8 task ~7h) + xuất DOCX | Tech Lead |
+| 2026-08-24 22:40 | Bước 3.1 Done — Code 2 API + UI + 15 test mới (119 total, 0 fail) + CODE-GRAPH cập nhật. Commit 5297bc2 pushed. | Senior Developer |
 
 ---
 **Status icons:** ⬜ Todo | 🔄 In Progress | ✅ Done | 🛑 Blocked | ⏭️ Skipped
