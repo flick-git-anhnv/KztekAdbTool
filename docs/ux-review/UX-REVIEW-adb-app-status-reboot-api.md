@@ -4,7 +4,7 @@
 **Reviewer:** UX/UI Reviewer Agent
 **Môi trường:** Local (Linux/WSL2) | Branch: `docker-deploy` | Commit: sau 3.2 APPROVE
 **Tổng số màn hình review:** 1 (Dashboard `Pages/Index.cshtml` — section "Thao tác thiết bị")
-**Kết quả tổng quan:** NEEDS-FIX
+**Kết quả tổng quan:** ~~NEEDS-FIX~~ **PASS** (sau re-check 2026-08-24)
 
 ---
 
@@ -156,7 +156,7 @@ Confirm dialog reboot (đã verify bằng Playwright):
 
 ---
 
-## Kết luận & Đề xuất
+## Kết luận & Đề xuất (vòng đầu — 2026-08-24)
 
 Feature "API Kiểm Tra Trạng Thái App + Reboot" đã triển khai đúng logic UI, luồng người dùng rõ ràng, phòng ngừa thao tác nguy hiểm (confirm dialog reboot) hoạt động chính xác, xử lý lỗi API hiển thị đầy đủ qua toast và log.
 
@@ -166,3 +166,36 @@ Không có issue Critical hoặc High. 3 issue được phát hiện:
 - **UI-003 (Low):** thiếu `aria-hidden` trên icon — gap nhất quán toàn codebase, không regression.
 
 **Khuyến nghị:** Fix UI-001 trước khi release (Senior Developer cân nhắc UI-001 cùng lúc với sprint hiện tại). UI-002 và UI-003 có thể đưa vào backlog sprint tiếp theo.
+
+---
+
+## Re-check sau fix (2026-08-24)
+
+**Fix commit:** `23838dc` — Senior Developer đã fix 3 issue UI-001/002/003 tại commit này.
+**Re-check method:** Playwright headless Chromium, `getComputedStyle()` trên DOM thật, đọc DOM attributes, phân tích code diff.
+**Screenshots re-check:** `docs/ux-review/screenshots/2026-08-24/app-status-reboot-fixed-*.png`
+
+### Kết quả verify từng issue
+
+| Issue | Mô tả | Trạng thái | Bằng chứng |
+|---|---|---|---|
+| UI-001 | Màu brand KZTEK không đúng (Bootstrap blue/amber) | **Resolved** | `getComputedStyle` đo được: nút Check App Status `color: rgb(37, 28, 83)` = #251C53 (Navy), `borderColor: rgb(37, 28, 83)`. Nút Reboot `color: rgb(240, 89, 34)` = #F05922 (Cam), `borderColor: rgb(240, 89, 34)`. Class đổi thành `btn-kz-outline-navy` / `btn-kz-outline-orange`. |
+| UI-002 | Không có disabled state / loading spinner khi API call | **Resolved** | Code diff: `btnAppStatus.disabled = true` + spinner `spinner-border-sm` trước `fetch()`, restore trong `finally`. DOM verify: `disabled = false` khi ở trạng thái nghỉ (đúng). JS pattern bảo đảm double-click prevented trong suốt API call. |
+| UI-003 | Thiếu `aria-hidden="true"` trên `<i>` icon | **Resolved** | DOM evaluate: `checkIconAriaHidden = "true"`, `rebootIconAriaHidden = "true"`. Playwright xác nhận cả 2 icon đã có attribute. |
+
+### Re-check tiêu chí C1, C2, C4, C7 (các tiêu chí bị ảnh hưởng)
+
+| Tiêu chí | Kết quả vòng đầu | Kết quả sau re-check |
+|---|---|---|
+| C1 Màu sắc & Brand | NEEDS-FIX | **PASS** — computed style Navy #251C53 / Cam #F05922 đo được |
+| C2 Nhất quán UI | NEEDS-FIX | **PASS** — class mới `.btn-kz-outline-navy` / `.btn-kz-outline-orange` nhất quán brand |
+| C4 Phản hồi người dùng | NEEDS-FIX | **PASS** — disabled + spinner trước fetch, restore trong finally |
+| C7 Accessibility cơ bản | NEEDS-FIX | **PASS** — `aria-hidden="true"` có mặt trong DOM |
+
+### Kết luận re-check
+
+**Tất cả 3 issue đã được Resolved. Kết quả tổng quan: PASS.**
+
+Không phát hiện thay đổi nào ngoài scope 3 issue (diff giới hạn đúng 3 file: `Index.cshtml`, `dashboard.css`, `dashboard.js`). Các tiêu chí C3, C5, C6 (đã PASS từ vòng đầu) không bị ảnh hưởng — không cần kiểm tra lại.
+
+Feature sẵn sàng chuyển sang QA Engineer (STEP-4.1). QA không cần test lại UI brand color hoặc aria-hidden — đã verified bằng computed style thật.

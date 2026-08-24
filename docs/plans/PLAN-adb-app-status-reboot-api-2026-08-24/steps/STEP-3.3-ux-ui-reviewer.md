@@ -3,7 +3,7 @@ step: 3.3
 plan: ../PLAN-MASTER.md
 agent: UX/UI Reviewer
 status: done
-completed_at: 2026-08-24 22:58
+completed_at: 2026-08-24 23:09 (re-check)
 deps: ["3.2"]
 ---
 
@@ -57,6 +57,17 @@ Từ Bước 3.2 Handoff Payload — code đã được Tech Lead APPROVE, commi
 - Viết `docs/ux-review/UX-REVIEW-adb-app-status-reboot-api.md` + xuất DOCX.
 - Kill app sau khi hoàn thành review.
 
+### Re-check (2026-08-24 23:09) — verify fix commit 23838dc
+- Đọc `git show 23838dc` — xác nhận đúng scope 3 fix (Index.cshtml, dashboard.css, dashboard.js).
+- Chạy lại app: `dotnet run --urls http://localhost:5099` (HTTP 200 OK).
+- Playwright Python: `getComputedStyle` đo màu trực tiếp từ DOM thật:
+  - UI-001 RESOLVED: `btn-check-app-status` → `color: rgb(37,28,83)` = #251C53, `borderColor: rgb(37,28,83)`. `btn-reboot-device` → `color: rgb(240,89,34)` = #F05922, `borderColor: rgb(240,89,34)`.
+  - UI-002 RESOLVED: `disabled = false` ở trạng thái nghỉ (đúng); code diff xác nhận `disabled=true` + spinner trước fetch + restore trong `finally`.
+  - UI-003 RESOLVED: DOM evaluate → `checkIconAriaHidden = "true"`, `rebootIconAriaHidden = "true"`.
+- Chụp 4 screenshots mới vào `docs/ux-review/screenshots/2026-08-24/app-status-reboot-fixed-*.png`.
+- Cập nhật report: thêm section "Re-check sau fix", đổi kết quả tổng quan → PASS.
+- Kill app sau khi xong.
+
 ## Artifact
 - `docs/ux-review/UX-REVIEW-adb-app-status-reboot-api.md`
 - `docs/ux-review/UX-REVIEW-adb-app-status-reboot-api.docx`
@@ -74,23 +85,24 @@ Từ Bước 3.2 Handoff Payload — code đã được Tech Lead APPROVE, commi
 - UI-003 (Low): `aria-hidden="true"` thiếu trên `<i>` icons — gap toàn codebase, không phải regression feature này.
 
 ## Handoff Payload — bước sau đọc phần này
-- Đã làm: UX review C1–C7 done, app chạy OK, 5/5 kịch bản test pass, report + DOCX created.
-- do_not_redo: KHÔNG chạy lại UX review. KHÔNG test lại confirm dialog (đã verified). KHÔNG re-audit code review (STEP-3.2 đã APPROVE).
+- Đã làm: UX review C1–C7 done, app chạy OK, 5/5 kịch bản test pass, report + DOCX created. Re-check sau fix commit 23838dc: UI-001/002/003 RESOLVED, kết luận tổng quan PASS.
+- do_not_redo: KHÔNG chạy lại UX review. KHÔNG test lại confirm dialog (đã verified). KHÔNG re-audit code review (STEP-3.2 đã APPROVE). KHÔNG verify lại brand color hay aria-hidden — đã đo bằng computed style thật.
 - watch_out:
-  1. 3 issue cần QA Engineer biết: UI-001 (color), UI-002 (no loading state), UI-003 (aria-hidden) — ghi nhận trong test plan nhưng KHÔNG block QA sign-off (đều Low/Medium, không phải functional blocker).
+  1. UI-001/002/003 đã RESOLVED — QA không cần test lại các issue UI này.
   2. Không có thiết bị Android thật kết nối — QA Engineer cần device thật để verify kịch bản API trả Foreground/Background state và reboot thực sự.
-  3. App port có thể thay đổi (không control được khi chạy qua `dotnet run` background + env var không truyền được) — dùng `dotnet run` foreground hoặc chỉ định `--urls` trực tiếp trong lệnh.
+  3. App port: dùng `dotnet run --urls http://localhost:5099` để tránh port random.
   4. `appsettings.json` có `LaunchApp:ApiKey = "123456a@"` — dùng header `x-api-key: 123456a@` khi test API manual.
 - next_inputs:
-  - URL: `http://localhost:5099` (nếu dùng `ASPNETCORE_URLS=http://localhost:5099 dotnet run`) hoặc port random nếu chạy mặc định.
-  - Report UX: `docs/ux-review/UX-REVIEW-adb-app-status-reboot-api.md` — đọc phần "Danh sách issue" cho context.
+  - Kết luận UXR: **PASS** — UX sign-off hoàn tất, QA có thể tiến hành STEP-4.1.
+  - URL: `http://localhost:5099` (dùng `dotnet run --urls http://localhost:5099`).
+  - Report UX: `docs/ux-review/UX-REVIEW-adb-app-status-reboot-api.md` — phần "Re-check sau fix" cho đầy đủ context.
   - API endpoints cần test: `GET /api/devices/{serial}/app-status?package={pkg}` và `POST /api/devices/{serial}/reboot`.
   - Kịch bản đã cover (UX, không cần repeat): (a)(b)(c)(d)(e) như trên.
   - Kịch bản cần QA test với device thật: trạng thái Foreground, Background, NotRunning; reboot thực và device tự online lại; 401 khi sai API key; 404 khi serial không tồn tại; 400 khi package rỗng.
 
 ## Commit
-- Hash: (sẽ điền sau khi commit)
-- Đã push: No
+- Hash vòng đầu: fb279b9
+- Re-check commit: cdb95ee
 
 ---
 **Status icons:** ⬜ Todo | 🔄 In Progress | ✅ Done | 🛑 Blocked | ⏭️ Skipped
