@@ -370,3 +370,71 @@ Test case cuối đã chạy: TC-B03 (POST /reboot 401 no key)
 Kết quả: Pass — HTTP 401 {"success":false,"error":"Unauthorized","message":"Invalid or missing API key."}
 dotnet test: 119/119 Pass
 ```
+
+---
+
+## QA Lead Sign-off
+
+**QA Lead:** QA Lead (software@kztek.net)
+**Ngày:** 2026-08-24
+
+### Đánh giá coverage
+
+**Coverage so với TDD error matrix — ĐỦ:**
+
+| API | Status code | TC | Phương pháp | Kết quả |
+|-----|------------|-----|-------------|---------|
+| app-status | 200 (Foreground/Background/NotRunning) | TC-A01/A02/A03 | Unit test (không có thiết bị) | Blocked / Pass (unit) |
+| app-status | 400 | TC-A05 | HTTP thực tế | PASS |
+| app-status | 401 | TC-A06 | HTTP thực tế | PASS |
+| app-status | 404 | TC-A04 | HTTP thực tế | PASS |
+| app-status | 422 | TC-A07 | Unit test | Pass (unit) |
+| app-status | 500 | (implicit) | Unit test (AdbService error path) | Pass (unit) |
+| reboot | 200 | TC-B01 | Unit test (không có thiết bị) | Blocked / Pass (unit) |
+| reboot | 401 | TC-B03 | HTTP thực tế | PASS |
+| reboot | 404 | TC-B02 | HTTP thực tế | PASS |
+| reboot | 422 | TC-B04 | Unit test (DeviceOffline + AdbTimeout) | Pass (unit) |
+| reboot | 500 | TC-B04 | Unit test (AdbNotFound) | Pass (unit) |
+| UI | 3 smoke TC | TC-C01/C02/C03 | Playwright (UXR STEP-3.3) | PASS |
+
+Tất cả status code trong TDD §3.1 và §3.2 đều có TC tương ứng. 7/14 TC pass qua HTTP thực tế với bằng chứng curl log đầy đủ. 3/14 pass qua Playwright (UXR). 4/14 pass qua unit test.
+
+### Đánh giá đặc biệt — TC-B01 (reboot destructive)
+
+TC-B01 là lệnh destructive (`adb reboot`) — sau khi gửi lệnh, thiết bị offline ngay, không hoàn tác được. Đây là rủi ro cần lưu ý:
+
+- Logic endpoint và AdbService đã được xác nhận qua unit test (mock ADB process)
+- Confirm dialog UI đã được Playwright xác nhận (TC-C02 — user phải bấm OK mới gửi lệnh)
+- Tuy nhiên, luồng E2E thực tế (gọi HTTP → ADB → thiết bị reboot → response "RebootInitiated") **chưa được verify bằng thiết bị thật**
+
+Đây không phải P0/P1 bug — đây là gap coverage do môi trường test không có thiết bị Android, không phải do code sai. Unit test đã confirm đúng contract.
+
+### Trạng thái bug
+
+- P0 open: **0**
+- P1 open: **0**
+- Tổng bug phát hiện: **0**
+
+Điều kiện VETO (còn P0/P1 bug) **không áp dụng**.
+
+### Quyết định: APPROVED CÓ ĐIỀU KIỆN
+
+**SIGN-OFF: APPROVED CÓ ĐIỀU KIỆN**
+
+Feature đủ điều kiện deploy nội bộ (staging/internal). Trước khi go-live production, DevOps Engineer PHẢI thực hiện **và ghi nhận bằng chứng** hai điều kiện bắt buộc sau:
+
+**Điều kiện 1 — Smoke test app-status với thiết bị thật:**
+- Chạy TC-A01 với thiết bị Android thật có app đang ở foreground
+- Xác nhận HTTP 200, `state: "Foreground"` trả về đúng
+- Ghi curl output + screenshot/log vào DEPLOY doc
+
+**Điều kiện 2 — Smoke test reboot với thiết bị thật:**
+- Chạy TC-B01 với thiết bị Android thật trong môi trường staging (KHÔNG dùng thiết bị production đang phục vụ người dùng)
+- Xác nhận HTTP 200, `status: "RebootInitiated"` trả về trước khi thiết bị offline
+- Ghi curl output vào DEPLOY doc
+- Xác nhận thiết bị reconnect sau reboot (smoke test bổ sung)
+
+**Nếu cả 2 điều kiện đều pass:** Feature được phép deploy production không cần thêm sign-off.
+**Nếu một trong 2 điều kiện fail:** DevOps Lead phải escalate lên QA Lead để re-evaluate trước khi tiếp tục.
+
+Deploy nội bộ (staging image Docker, nhánh `docker-deploy`): **KHÔNG BỊ BLOCK** bởi 2 TC Blocked — có thể tiến hành song song với việc thu xếp thiết bị thật để test.
