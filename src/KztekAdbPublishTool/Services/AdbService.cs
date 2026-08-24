@@ -170,7 +170,7 @@ public sealed class AdbService
             return new AdbCommandResult { ExitCode = -1, StdErr = "No activities found to run" };
         }
 
-        return await RunAsync($"-s {serial} shell am start -n {component}", timeoutMs: 10000, ct: ct);
+        return await RunAsync($"-s {serial} shell am start -a android.intent.action.MAIN -c android.intent.category.LAUNCHER  -n {component}", timeoutMs: 10000, ct: ct);
     }
 
     /// <summary>
