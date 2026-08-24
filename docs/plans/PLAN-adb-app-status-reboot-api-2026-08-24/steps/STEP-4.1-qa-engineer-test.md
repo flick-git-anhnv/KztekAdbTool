@@ -82,8 +82,8 @@ Xuất DOCX sau khi viết.
 - **next_inputs:** `docs/test-cases/TC-adb-app-status-reboot-api.md` (kết quả chi tiết 14 TC); tổng: 12 Pass, 2 Blocked, 0 Fail; không có bug P0/P1; dotnet test 119/119 xanh; khuyến nghị sign-off: APPROVED với ghi chú "2 TC cần thiết bị thật — test khi có thiết bị, không blocker deploy nội bộ".
 
 ## Commit
-- Hash: (điền sau commit)
-- Đã push: No
+- Hash: 3f1a4a0
+- Đã push: Yes
 
 ---
 **Status icons:** ⬜ Todo | 🔄 In Progress | ✅ Done | 🛑 Blocked | ⏭️ Skipped
