@@ -99,7 +99,14 @@ public sealed class ApiRequestLoggingEndpointFilter : IEndpointFilter
             return ApiRequestLogConstants.ApiAddDevice;
         if (path.Equals("/api/launch-app", StringComparison.OrdinalIgnoreCase))
             return ApiRequestLogConstants.ApiLaunchApp;
-        return "Unknown";   // guard — filter chỉ gắn vào 2 route trên
+        // Route mới có {serial} → dùng EndsWith (không Equals vì có placeholder)
+        if (path.EndsWith("/app-status", StringComparison.OrdinalIgnoreCase) &&
+            path.StartsWith("/api/devices/", StringComparison.OrdinalIgnoreCase))
+            return ApiRequestLogConstants.ApiAppStatus;
+        if (path.EndsWith("/reboot", StringComparison.OrdinalIgnoreCase) &&
+            path.StartsWith("/api/devices/", StringComparison.OrdinalIgnoreCase))
+            return ApiRequestLogConstants.ApiRebootDevice;
+        return "Unknown";   // guard — filter chỉ gắn vào các route đã biết
     }
 
     private static string ResolveCallerIp(HttpContext http)

@@ -82,6 +82,10 @@ app.MapLaunchAppEndpoints();
 // ── Endpoints [adb-add-device-api] ────────────────────────────────────────────
 app.MapDeviceConnectionEndpoints();
 
+// ── Endpoints [adb-app-status-reboot-api] ─────────────────────────────────────
+app.MapAppStatusEndpoints();
+app.MapRebootEndpoints();
+
 // ── Pages ─────────────────────────────────────────────────────────────────────
 app.MapRazorPages();
 

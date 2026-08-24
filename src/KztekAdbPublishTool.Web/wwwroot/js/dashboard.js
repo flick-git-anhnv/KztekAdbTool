@@ -92,7 +92,7 @@
     //         "[API] LaunchApp serial=R58N7XX, app=com.kztek.demo → Unauthorized (401, 3ms) from 10.0.0.9"
     function formatApiRequestLog(entry) {
         if (!entry) return '[API] (empty log entry)';
-        var paramStr = summarizeParams(entry.apiName, entry.parameters);
+        var paramStr = summarizeParams(entry.apiName, entry.parameters, entry);
         var status = entry.httpStatusCode || '-';
         var dur = (entry.durationMs != null ? entry.durationMs : 0) + 'ms';
         var caller = entry.callerIp ? ('from ' + entry.callerIp) : '';
@@ -103,7 +103,11 @@
 
     // Tóm tắt parameters JSON thành text ngắn.
     // Best-effort — nếu parse fail hoặc "invalid body" → hiển thị nguyên.
-    function summarizeParams(apiName, paramsJsonOrNull) {
+    function summarizeParams(apiName, paramsJsonOrNull, entry) {
+        // AppStatus và RebootDevice không có JSON body — dùng path từ entry để log dễ đọc (TDD §7.3)
+        if (apiName === 'AppStatus' || apiName === 'RebootDevice') {
+            return (entry && entry.path) ? entry.path : '(no body)';
+        }
         if (!paramsJsonOrNull) return '(no body)';
         if (paramsJsonOrNull === 'invalid body') return '(invalid body)';
         try {
@@ -122,6 +126,14 @@
         } catch (_) {
             return paramsJsonOrNull;
         }
+    }
+
+    // ── API key helper ────────────────────────────────────────────────────────────
+    // Đọc từ window.KZ_API_KEY được embed bởi Razor IndexModel.PublicApiKey.
+    // Không log key ra console — chỉ đính vào header.
+    function apiHeaders() {
+        var key = window.KZ_API_KEY;
+        return key ? { 'x-api-key': key } : {};
     }
 
     // ── Device grid render (called by DevicesUpdated SignalR event) ───────────────
@@ -565,6 +577,66 @@
                 } catch (ex) {
                     appendLog('Lỗi: ' + ex.message);
                 }
+            });
+        }
+
+        // ── Check App Status ─────────────────────────────────────────────────────
+        var btnAppStatus = $id('btn-check-app-status');
+        if (btnAppStatus) {
+            btnAppStatus.addEventListener('click', async function () {
+                var serials = getCheckedSerials();
+                if (serials.length === 0) { alert('Chọn 1 thiết bị (tick 1 dòng) trước khi kiểm tra.'); return; }
+                if (serials.length > 1)   { alert('Chỉ chọn 1 thiết bị. Đang có ' + serials.length + ' thiết bị được chọn.'); return; }
+                var pkg = (($id('txt-package') || {}).value || '').trim();
+                if (!pkg) { alert('Nhập package name ở ô "Gói cần theo dõi" trước khi kiểm tra.'); return; }
+
+                var serial = serials[0];
+                var url = '/api/devices/' + encodeURIComponent(serial) + '/app-status?package=' + encodeURIComponent(pkg);
+                appendLog('Kiểm tra trạng thái app "' + pkg + '" trên ' + serial + '...');
+                try {
+                    var r = await fetch(url, { headers: apiHeaders() });
+                    var data = await r.json().catch(function () { return null; });
+                    if (r.ok && data && data.success) {
+                        var msg = 'Trạng thái ' + pkg + ' trên ' + serial + ': ' + data.state
+                                + (data.running ? ' (đang chạy)' : ' (không chạy)');
+                        appendLog(msg);
+                        showToast(msg, data.state === 'Foreground' ? 'success' : (data.running ? 'info' : 'warning'));
+                    } else {
+                        var errMsg = (data && data.message) || ('HTTP ' + r.status);
+                        appendLog('Lỗi app-status: ' + errMsg);
+                        showToast('Lỗi: ' + errMsg, 'danger');
+                    }
+                } catch (ex) { appendLog('Lỗi: ' + ex.message); }
+            });
+        }
+
+        // ── Reboot Device ────────────────────────────────────────────────────────
+        var btnReboot = $id('btn-reboot-device');
+        if (btnReboot) {
+            btnReboot.addEventListener('click', async function () {
+                var serials = getCheckedSerials();
+                if (serials.length === 0) { alert('Chọn 1 thiết bị (tick 1 dòng) trước khi reboot.'); return; }
+                if (serials.length > 1)   { alert('Chỉ chọn 1 thiết bị. Đang có ' + serials.length + ' thiết bị được chọn.'); return; }
+
+                var serial = serials[0];
+                var ok = confirm('Khởi động lại thiết bị "' + serial + '"?\n' +
+                                 '(Thiết bị sẽ offline vài giây và tự online lại. Không thể hoàn tác lệnh này.)');
+                if (!ok) return;
+
+                var url = '/api/devices/' + encodeURIComponent(serial) + '/reboot';
+                appendLog('Gửi lệnh reboot tới ' + serial + '...');
+                try {
+                    var r = await fetch(url, { method: 'POST', headers: apiHeaders() });
+                    var data = await r.json().catch(function () { return null; });
+                    if (r.ok && data && data.success) {
+                        appendLog('Đã gửi reboot ' + serial + ': ' + (data.message || data.status));
+                        showToast('Đã gửi reboot ' + serial, 'success');
+                    } else {
+                        var errMsg = (data && data.message) || ('HTTP ' + r.status);
+                        appendLog('Lỗi reboot: ' + errMsg);
+                        showToast('Lỗi: ' + errMsg, 'danger');
+                    }
+                } catch (ex) { appendLog('Lỗi: ' + ex.message); }
             });
         }
     }

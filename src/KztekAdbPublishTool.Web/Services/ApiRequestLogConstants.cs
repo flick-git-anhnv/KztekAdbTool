@@ -6,8 +6,10 @@ namespace KztekAdbPublishTool.Web.Services;
 public static class ApiRequestLogConstants
 {
     // ── ApiName enum-string (endpoint filter, JS handler, test) ──────────────
-    public const string ApiAddDevice = "AddDevice";
-    public const string ApiLaunchApp = "LaunchApp";
+    public const string ApiAddDevice    = "AddDevice";
+    public const string ApiLaunchApp    = "LaunchApp";
+    public const string ApiAppStatus    = "AppStatus";
+    public const string ApiRebootDevice = "RebootDevice";
 
     // ── Result enum-string ────────────────────────────────────────────────────
     public const string ResultSuccess      = "Success";

@@ -14,6 +14,21 @@ public sealed class AdbCommandResult
     public bool Success => ExitCode == 0;
 }
 
+public enum AppState
+{
+    NotRunning,
+    Background,
+    Foreground
+}
+
+public sealed class AppStatusResult
+{
+    public bool Running { get; init; }
+    public AppState State { get; init; }
+    public AdbCommandResult PidofResult { get; init; } = default!;   // endpoint biết stdout/stderr khi map error
+    public AdbCommandResult? DumpsysResult { get; init; }             // null nếu skip do NotRunning
+}
+
 public sealed class AdbDevice
 {
     public string Serial { get; init; } = string.Empty;
@@ -190,7 +205,7 @@ public sealed class AdbService : IAdbService
             return new AdbCommandResult { ExitCode = -1, StdErr = "No activities found to run" };
         }
 
-        return await RunAsync($"-s {serial} shell am start -n {component}", timeoutMs: 10000, ct: ct);
+        return await RunAsync($"-s {serial} shell am start -a android.intent.action.MAIN -c android.intent.category.LAUNCHER -n {component}", timeoutMs: 10000, ct: ct);
     }
 
     /// <summary>
@@ -200,6 +215,71 @@ public sealed class AdbService : IAdbService
     /// </summary>
     public Task<AdbCommandResult> UninstallApkAsync(string serial, string packageName, CancellationToken ct = default)
         => RunAsync($"-s {serial} uninstall {packageName}", timeoutMs: 30000, ct: ct);
+
+    /// <summary>
+    /// Kiểm tra trạng thái 1 app trên 1 thiết bị.
+    /// KHÔNG throw — mọi lỗi ADB trả qua AppStatusResult.PidofResult.Success/StdErr,
+    /// endpoint sẽ map thành 422/500 tương tự MapAdbResult trong LaunchAppEndpoints.
+    /// </summary>
+    public async Task<AppStatusResult> GetAppStatusAsync(
+        string serial, string packageName, CancellationToken ct = default)
+    {
+        // Bước 1: pidof
+        var pidof = await RunAsync($"-s {serial} shell pidof {packageName}", timeoutMs: 10000, ct: ct);
+
+        // ADB binary missing / timeout / hard error → trả về, endpoint map thành 500/422
+        if (pidof.ExitCode == -1)
+            return new AppStatusResult { Running = false, State = AppState.NotRunning, PidofResult = pidof };
+
+        // pidof exit 1 với stdout empty = process không tồn tại — coi như not running (không phải lỗi)
+        bool running = pidof.Success && !string.IsNullOrWhiteSpace(pidof.StdOut);
+
+        if (!running)
+            return new AppStatusResult { Running = false, State = AppState.NotRunning, PidofResult = pidof };
+
+        // Bước 2: dumpsys activity — chỉ chạy khi running=true
+        var dumpsys = await RunAsync($"-s {serial} shell dumpsys activity activities", timeoutMs: 10000, ct: ct);
+
+        // Nếu dumpsys hard-fail → coi như Background (đã biết chắc app đang chạy từ pidof)
+        bool foreground = dumpsys.Success && IsForegroundInDumpsys(dumpsys.StdOut, packageName);
+
+        return new AppStatusResult
+        {
+            Running       = true,
+            State         = foreground ? AppState.Foreground : AppState.Background,
+            PidofResult   = pidof,
+            DumpsysResult = dumpsys
+        };
+    }
+
+    // public static để unit test không cần AdbService thật
+    public static bool IsForegroundInDumpsys(string dumpsysStdOut, string packageName)
+    {
+        if (string.IsNullOrEmpty(dumpsysStdOut) || string.IsNullOrEmpty(packageName))
+            return false;
+
+        var lines = dumpsysStdOut.Split('\n', StringSplitOptions.RemoveEmptyEntries)
+            .Select(l => l.Trim());
+
+        // Primary: mResumedActivity (Android 8+)
+        bool matched = lines
+            .Where(l => l.StartsWith("mResumedActivity", StringComparison.Ordinal))
+            .Any(l => l.Contains($" {packageName}/", StringComparison.Ordinal));
+
+        if (matched) return true;
+
+        // Fallback: mFocusedActivity (Android 6-7)
+        return lines
+            .Where(l => l.StartsWith("mFocusedActivity", StringComparison.Ordinal))
+            .Any(l => l.Contains($" {packageName}/", StringComparison.Ordinal));
+    }
+
+    /// <summary>
+    /// Gửi lệnh reboot thiết bị. Trả về AdbCommandResult như các method khác —
+    /// endpoint tự map thành 200/422/500.
+    /// </summary>
+    public Task<AdbCommandResult> RebootDeviceAsync(string serial, CancellationToken ct = default)
+        => RunAsync($"-s {serial} reboot", timeoutMs: 10000, ct: ct);
 
     /// <summary>
     /// Trả về versionName của package trên thiết bị, hoặc null nếu chưa cài / không đọc được.

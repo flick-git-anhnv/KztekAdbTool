@@ -1,7 +1,7 @@
 ---
 project: KztekAdbPublishTool (multi-project solution)
-last_updated: 2026-08-20
-updated_by: Senior Developer (adb-uninstall-before-install STEP-3.1)
+last_updated: 2026-08-24
+updated_by: Senior Developer (adb-app-status-reboot-api STEP-3.1)
 ---
 
 # CODE-GRAPH — KztekAdbPublishTool Solution
@@ -18,6 +18,7 @@ updated_by: Senior Developer (adb-uninstall-before-install STEP-3.1)
 | 2026-08-19 | Senior Developer | BUG-adb-reconnect STEP-2.3: `AdbService.RunAsync` — re-throw OCE khi `ct.IsCancellationRequested` (phân biệt per-device timeout vs service shutdown); `WarmUpReconnectAsync` — fix logic ExitCode!= 0 → continue (không return/break), fix catch OCE → check ct, fix log message; thêm 2 unit tests (TimeoutOnSerial + OceOnSerial) |
 | 2026-08-19 | Senior Developer | api-request-log STEP-2.1: Thêm `Models/ApiRequestLogEntry`, `Services/ApiRequestLogConstants`, `Services/ApiRequestLogRepository` (raw ADO.NET SQLite), `Services/IApiRequestLogService` + `ApiRequestLogService` (ghi DB + broadcast SignalR `ApiRequestLogged`), `Endpoints/ApiRequestLoggingEndpointFilter` (OUTER filter bắt 401); gắn filter vào `LaunchAppEndpoints` + `DeviceConnectionEndpoints` POST route; đăng ký DI trong `Program.cs`; thêm 11 unit tests |
 | 2026-08-20 | Senior Developer | adb-uninstall-before-install STEP-3.1: Thêm `AdbService.UninstallApkAsync` (KHÔNG vào IAdbService); mở rộng `InstallCoordinator.QueueInstalls`/`InstallOneAsync`/`DoInstallAsync` (+param `uninstallBeforeInstall`, shift percent SignalR 0/15/25/40/55/70/85/100); thêm `InstallRequest.UninstallBeforeInstall`; thêm endpoint `POST /api/settings/uninstall-before-install` + DTO `UninstallBeforeInstallSettingRequest` vào `DeviceEndpoints.cs`; `IndexModel` load `UninstallBeforeInstall` từ DB; checkbox UI `chk-uninstall-before-install` (Index.cshtml hàng 3); dashboard.js change handler + 2 install handler truyền flag. Thêm 12 unit tests (`UninstallBeforeInstallTests`). |
+| 2026-08-24 | Senior Developer | adb-app-status-reboot-api STEP-3.1: Thêm `AppState` enum + `AppStatusResult` model + `AdbService.GetAppStatusAsync` (pidof + dumpsys) + `AdbService.IsForegroundInDumpsys` (static, testable) + `AdbService.RebootDeviceAsync`; tạo `Endpoints/AppStatusEndpoints.cs` (GET /api/devices/{serial}/app-status) + `Endpoints/RebootEndpoints.cs` (POST /api/devices/{serial}/reboot); thêm 2 constants vào `ApiRequestLogConstants`; cập nhật `ResolveApiName` trong `ApiRequestLoggingEndpointFilter`; `IndexModel` thêm `PublicApiKey` (từ `LaunchApp:ApiKey`); `Index.cshtml` thêm 2 nút + `window.KZ_API_KEY` script; `dashboard.js` thêm `apiHeaders()` + 2 event handler + cập nhật `summarizeParams`; thêm 16 unit tests (AppStatusEndpointsTests x9 + RebootEndpointsTests x6 + AdbServiceAppStatusTests x5 → thực tế 15 test mới + bộ cũ = 119 total). |
 
 ---
 
@@ -41,13 +42,15 @@ src/KztekAdbPublishTool.Web/
 │   └── AdbSettings.cs              ← POCO config (AdbPath, PollIntervalMs, DbPath, UploadsPath, MaxUploadBytes)
 ├── Endpoints/
 │   ├── ApkEndpoints.cs             ← POST /api/apk/upload, DELETE /api/apk
+│   ├── AppStatusEndpoints.cs       ← GET /api/devices/{serial}/app-status (filter: ApiRequestLoggingEndpointFilter OUTER + ApiKeyEndpointFilter) [adb-app-status-reboot-api STEP-3.1]
 │   ├── DeviceConnectionEndpoints.cs← POST /api/devices/connect-by-ip (filter: ApiRequestLoggingEndpointFilter OUTER + ApiKeyEndpointFilter), GET /api/devices/{serial}/status [adb-add-device-api; STEP-2.1]
 │   ├── DeviceEndpoints.cs          ← POST /api/devices/{connect,connect-batch,remove,poll}, GET /api/devices, POST /api/settings/package, /api/settings/uninstall-before-install, /api/polling/toggle [+endpoint STEP-3.1 adb-uninstall-before-install]
 │   ├── HealthEndpoints.cs          ← GET /health
 │   ├── InstallEndpoints.cs         ← POST /api/install
 │   ├── LaunchAppEndpoints.cs       ← POST /api/launch-app (filter: ApiRequestLoggingEndpointFilter OUTER + ApiKeyEndpointFilter) [STEP-2.1]
+│   ├── RebootEndpoints.cs          ← POST /api/devices/{serial}/reboot (filter: ApiRequestLoggingEndpointFilter OUTER + ApiKeyEndpointFilter) [adb-app-status-reboot-api STEP-3.1]
 │   ├── ApiKeyEndpointFilter.cs     ← INNER auth filter; BẤT KHẢ XÂM PHẠM
-│   ├── ApiRequestLoggingEndpointFilter.cs ← OUTER logging filter; capture body + callerIp + result → gọi IApiRequestLogService.LogAsync [STEP-2.1]
+│   ├── ApiRequestLoggingEndpointFilter.cs ← OUTER logging filter; capture body + callerIp + result → gọi IApiRequestLogService.LogAsync [STEP-2.1]; ResolveApiName cập nhật nhận AppStatus/RebootDevice route [adb-app-status-reboot-api]
 │   └── ScanEndpoints.cs            ← POST /api/scan/start, /api/scan/cancel
 ├── Hubs/
 │   └── DeviceHub.cs                ← SignalR Hub, endpoint /hubs/device
@@ -61,7 +64,7 @@ src/KztekAdbPublishTool.Web/
 │       └── _Layout.cshtml          ← Bootstrap 5 local, navbar KZTEK brand (Navy/Cam)
 ├── Services/
 │   ├── IAdbService.cs              ← Interface: GetDevicesAsync/ConnectAsync/GetPackageVersionAsync (testability)
-│   ├── AdbService.cs               ← Singleton; implement IAdbService; wrap adb binary; GetDevices/Connect/Install/LaunchApp/GetVersion/UninstallApkAsync [STEP-3.1 adb-uninstall-before-install]
+│   ├── AdbService.cs               ← Singleton; implement IAdbService; wrap adb binary; GetDevices/Connect/Install/LaunchApp/GetVersion/UninstallApkAsync/GetAppStatusAsync/IsForegroundInDumpsys(static)/RebootDeviceAsync [+adb-app-status-reboot-api STEP-3.1]
 │   ├── ApkManifestReader.cs        ← Singleton; parse AXML từ .apk; stateless
 │   ├── DeviceRepository.cs         ← Singleton; SQLite CRUD (Upsert/Remove/GetAll/GetSetting/SetSetting/UpdateInstallResult)
 │   ├── InstallCoordinator.cs       ← Singleton; queue install per-device (SemaphoreSlim(1)), global (SemaphoreSlim(4)); QueueInstalls+param `uninstallBeforeInstall` [STEP-3.1 adb-uninstall-before-install]
@@ -93,11 +96,11 @@ src/KztekAdbPublishTool.Web/
 
 | Module | Phụ thuộc vào | Được gọi bởi (Callers) | Confidence | Last verified |
 |---|---|---|---|---|
-| `Program.cs` | AdbSettings, LaunchAppSettings, AdbService, DeviceRepository, ApkManifestReader, DevicePollWorker, DeviceHub, DeviceState, InstallCoordinator, ScanCoordinator, PollControlService, ApiRequestLogRepository, IApiRequestLogService, ApiRequestLoggingEndpointFilter | — (entry point) | CONFIRMED | 2026-08-19 |
+| `Program.cs` | AdbSettings, LaunchAppSettings, AdbService, DeviceRepository, ApkManifestReader, DevicePollWorker, DeviceHub, DeviceState, InstallCoordinator, ScanCoordinator, PollControlService, ApiRequestLogRepository, IApiRequestLogService, ApiRequestLoggingEndpointFilter, AppStatusEndpoints, RebootEndpoints | — (entry point) | CONFIRMED | 2026-08-24 |
 | `Configuration/AdbSettings` | — | Program.cs, AdbService, DeviceRepository, DevicePollWorker | CONFIRMED | 2026-08-10 |
 | `Configuration/LaunchAppSettings` | — | Program.cs, ApiKeyEndpointFilter | CONFIRMED | 2026-08-18 |
 | `Services/IAdbService` | — | DevicePollWorker (interface dep), AdbService (implements) | CONFIRMED | 2026-08-19 |
-| `Services/AdbService` | IOptions\<AdbSettings\>, System.Diagnostics.Process, **IAdbService** | DevicePollWorker (via IAdbService), InstallCoordinator, LaunchAppEndpoints, DeviceConnectionEndpoints, HealthEndpoints | CONFIRMED | 2026-08-20 |
+| `Services/AdbService` | IOptions\<AdbSettings\>, System.Diagnostics.Process, **IAdbService** | DevicePollWorker (via IAdbService), InstallCoordinator, LaunchAppEndpoints, DeviceConnectionEndpoints, HealthEndpoints, AppStatusEndpoints, RebootEndpoints | CONFIRMED | 2026-08-24 |
 | `Services/DeviceRepository` | IOptions\<AdbSettings\>, Microsoft.Data.Sqlite, Models/DeviceRecord | DevicePollWorker, DeviceEndpoints, InstallEndpoints, ApkEndpoints, InstallCoordinator | CONFIRMED | 2026-08-10 |
 | `Services/ApkManifestReader` | System.IO.Compression | ApkEndpoints | CONFIRMED | 2026-08-10 |
 | `Services/InstallCoordinator` | AdbService, DeviceRepository, DeviceState, IHubContext\<DeviceHub\> | InstallEndpoints | CONFIRMED | 2026-08-20 |
@@ -106,7 +109,9 @@ src/KztekAdbPublishTool.Web/
 | `Services/ScanRangeParser` | — | ScanCoordinator | CONFIRMED | 2026-08-10 |
 | `State/DeviceState` | System.Collections.Concurrent, Models/DeviceRecord | DevicePollWorker, DeviceEndpoints, InstallEndpoints, InstallCoordinator, LaunchAppEndpoints, DeviceConnectionEndpoints | CONFIRMED | 2026-08-19 |
 | `Endpoints/ApiKeyEndpointFilter` | IOptions\<LaunchAppSettings\>, ILogger | LaunchAppEndpoints (.AddEndpointFilter INNER), DeviceConnectionEndpoints (.AddEndpointFilter INNER) | CONFIRMED | 2026-08-19 |
-| `Endpoints/ApiRequestLoggingEndpointFilter` | IApiRequestLogService, ILogger | LaunchAppEndpoints (.AddEndpointFilter OUTER), DeviceConnectionEndpoints (.AddEndpointFilter OUTER, POST route only) | CONFIRMED | 2026-08-19 |
+| `Endpoints/ApiRequestLoggingEndpointFilter` | IApiRequestLogService, ILogger | LaunchAppEndpoints (.AddEndpointFilter OUTER), DeviceConnectionEndpoints (.AddEndpointFilter OUTER, POST route only), AppStatusEndpoints (.AddEndpointFilter OUTER), RebootEndpoints (.AddEndpointFilter OUTER) | CONFIRMED | 2026-08-24 |
+| `Endpoints/AppStatusEndpoints` | DeviceState, AdbService, ApiKeyEndpointFilter, ApiRequestLoggingEndpointFilter, ILoggerFactory | Program.cs (MapAppStatusEndpoints) | CONFIRMED | 2026-08-24 |
+| `Endpoints/RebootEndpoints` | DeviceState, AdbService, ApiKeyEndpointFilter, ApiRequestLoggingEndpointFilter, ILoggerFactory | Program.cs (MapRebootEndpoints) | CONFIRMED | 2026-08-24 |
 | `Endpoints/LaunchAppEndpoints` | DeviceState, AdbService, ApiKeyEndpointFilter, ApiRequestLoggingEndpointFilter, ILoggerFactory | Program.cs (MapLaunchAppEndpoints) | CONFIRMED | 2026-08-19 |
 | `Endpoints/DeviceConnectionEndpoints` | AdbService, PollControlService, DeviceState, ApiKeyEndpointFilter, ApiRequestLoggingEndpointFilter, ILoggerFactory | Program.cs (MapDeviceConnectionEndpoints) | CONFIRMED | 2026-08-19 |
 | `Hubs/DeviceHub` | Microsoft.AspNetCore.SignalR.Hub | Program.cs (MapHub), DevicePollWorker, InstallCoordinator, ScanCoordinator | CONFIRMED | 2026-08-10 |
@@ -122,7 +127,7 @@ src/KztekAdbPublishTool.Web/
 | `Endpoints/ScanEndpoints` | ScanCoordinator | Program.cs (MapScanEndpoints) | CONFIRMED | 2026-08-10 |
 | `Endpoints/ApkEndpoints` | IOptions\<AdbSettings\>, ApkManifestReader, DeviceRepository | Program.cs (MapApkEndpoints) | CONFIRMED | 2026-08-10 |
 | `Endpoints/HealthEndpoints` | — | Program.cs (MapHealthEndpoints) | CONFIRMED | 2026-08-10 |
-| `Pages/Index` | IndexModel : PageModel | Router (/) | CONFIRMED | 2026-08-20 |
+| `Pages/Index` | IndexModel : PageModel, IOptions\<LaunchAppSettings\> (PublicApiKey) | Router (/) | CONFIRMED | 2026-08-24 |
 | `wwwroot/js/signalr-client.js` | signalr.min.js (local lib) | _Layout.cshtml | CONFIRMED | 2026-08-10 |
 | `wwwroot/js/dashboard.js` | signalr-client.js, bootstrap.bundle.min.js (local) | _Layout.cshtml | CONFIRMED | 2026-08-10 |
 | `wwwroot/js/scan-modal.js` | signalr-client.js | _Layout.cshtml | CONFIRMED | 2026-08-10 |
@@ -150,6 +155,8 @@ src/KztekAdbPublishTool.Web/
 | POST | `/api/launch-app` | LaunchAppEndpoints → ApiKeyEndpointFilter → DeviceState → AdbService | ✅ STEP-3.1 2026-08-18 |
 | POST | `/api/devices/connect-by-ip` | DeviceConnectionEndpoints → ApiKeyEndpointFilter → AdbService → PollControlService | ✅ STEP-3.1 [adb-add-device-api] 2026-08-19 |
 | GET | `/api/devices/{serial}/status` | DeviceConnectionEndpoints → ApiKeyEndpointFilter → DeviceState | ✅ STEP-3.1 [adb-add-device-api] 2026-08-19 |
+| GET | `/api/devices/{serial}/app-status` | AppStatusEndpoints → ApiRequestLoggingEndpointFilter → ApiKeyEndpointFilter → DeviceState → AdbService.GetAppStatusAsync | ✅ STEP-3.1 [adb-app-status-reboot-api] 2026-08-24 |
+| POST | `/api/devices/{serial}/reboot` | RebootEndpoints → ApiRequestLoggingEndpointFilter → ApiKeyEndpointFilter → DeviceState → AdbService.RebootDeviceAsync | ✅ STEP-3.1 [adb-app-status-reboot-api] 2026-08-24 |
 
 ### 2.4 SignalR Events (server → client)
 
@@ -209,3 +216,15 @@ src/KztekAdbPublishTool.Web/
 | 2026-08-19 | `src/.../Program.cs` | Thêm 3 dòng DI: ApiRequestLogRepository (Singleton), IApiRequestLogService (Singleton), ApiRequestLoggingEndpointFilter (Scoped) |
 | 2026-08-19 | `tests/.../ApiRequestLogServiceTests.cs` | **MỚI** — 4 unit tests: happy path, truncate params, truncate errMsg, hub throw swallow |
 | 2026-08-19 | `tests/.../ApiRequestLoggingEndpointFilterTests.cs` | **MỚI** — 7 unit tests: 200/401/422, body buffering, handler throw, XFF, durationMs |
+| 2026-08-24 | `src/.../Services/AdbService.cs` | **THÊM** — `AppState` enum, `AppStatusResult` model, `GetAppStatusAsync` (pidof+dumpsys), `IsForegroundInDumpsys` (public static), `RebootDeviceAsync` [adb-app-status-reboot-api] |
+| 2026-08-24 | `src/.../Endpoints/AppStatusEndpoints.cs` | **MỚI** — GET /api/devices/{serial}/app-status; Validate/CheckDeviceState/MapAppStatusResult public static [adb-app-status-reboot-api] |
+| 2026-08-24 | `src/.../Endpoints/RebootEndpoints.cs` | **MỚI** — POST /api/devices/{serial}/reboot; CheckDeviceState/MapRebootResult public static [adb-app-status-reboot-api] |
+| 2026-08-24 | `src/.../Services/ApiRequestLogConstants.cs` | Thêm `ApiAppStatus` + `ApiRebootDevice` constants [adb-app-status-reboot-api] |
+| 2026-08-24 | `src/.../Endpoints/ApiRequestLoggingEndpointFilter.cs` | `ResolveApiName` nhận diện 2 route mới dùng EndsWith (có {serial} placeholder) [adb-app-status-reboot-api] |
+| 2026-08-24 | `src/.../Pages/Index.cshtml.cs` | `IndexModel` thêm `PublicApiKey` từ `LaunchApp:ApiKey` (inject `IOptions<LaunchAppSettings>`) [adb-app-status-reboot-api] |
+| 2026-08-24 | `src/.../Pages/Index.cshtml` | Thêm 2 nút `btn-check-app-status` + `btn-reboot-device`; thêm `window.KZ_API_KEY` script [adb-app-status-reboot-api] |
+| 2026-08-24 | `src/.../wwwroot/js/dashboard.js` | Thêm `apiHeaders()` helper; cập nhật `summarizeParams` nhận `entry` param (dùng path cho AppStatus/RebootDevice); thêm 2 event handler [adb-app-status-reboot-api] |
+| 2026-08-24 | `src/.../Program.cs` | Thêm `MapAppStatusEndpoints()` + `MapRebootEndpoints()` [adb-app-status-reboot-api] |
+| 2026-08-24 | `tests/.../AppStatusEndpointsTests.cs` | **MỚI** — 9 unit tests: ValidateInput x3, CheckDeviceState x2, MapAppStatusResult x4 (3 states + AdbNotFound + AdbTimeout + AdbError) |
+| 2026-08-24 | `tests/.../RebootEndpointsTests.cs` | **MỚI** — 6 unit tests: CheckDeviceState x2, MapRebootResult x4 (Success + AdbNotFound + AdbTimeout + AdbError) |
+| 2026-08-24 | `tests/.../AdbServiceAppStatusTests.cs` | **MỚI** — 5 unit tests: IsForegroundInDumpsys (mResumedActivity found, other package, empty, mFocusedActivity fallback, neither) |
