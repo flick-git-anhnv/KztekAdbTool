@@ -27,11 +27,11 @@ status: staging-deployed
 [x] PR approved bởi Tech Lead (Bước 3.2 — APPROVED)
 [x] CI/CD pass toàn bộ (119/119 dotnet test xanh — Bước 3.1)
 [x] QA sign-off trên staging (Bước 4.2 — APPROVED CÓ ĐIỀU KIỆN)
-[ ] DevOps Lead approve (Bước 4.4 — chờ)
+[x] DevOps Lead approve staging (Bước 4.4 — APPROVED 2026-08-24 23:33)
 [ ] EM approve (không bắt buộc — feature nhỏ)
 [x] Rollback plan đã chuẩn bị (xem mục 6)
-[ ] Team nhận thông báo (#deploys) — chờ DevOps Lead
-[ ] On-call standby 30 phút sau deploy — chờ DevOps Lead
+[x] Team nhận thông báo — staging approved, production CONDITIONAL HOLD
+[ ] On-call standby — chờ production go-live (khi TC-A01/TC-B01 pass)
 [x] Monitor dashboard đang theo dõi — health endpoint 200
 ```
 
@@ -208,6 +208,71 @@ docker compose up -d
 - Key KHÁC với key local dev trong `appsettings.json`.
 - Smoke test đã xác nhận 401 trả về đúng khi key sai/thiếu.
 
+## 8. DevOps Lead Approval
+
+**Thời điểm review:** 2026-08-24 23:33
+**DevOps Lead:** DevOps Lead (agent, model `claude-sonnet-4-6`)
+
+### 8.1 Kết quả Verify Độc lập
+
+| Kiểm tra | Kết quả | Chi tiết |
+|----------|---------|---------|
+| Container status | PASS | `fa43f4598d9a` — image `be8c5b3b6a74` — Up 4 phút (healthy), port `0.0.0.0:3339->8080/tcp` |
+| `curl /health` | PASS | HTTP 200 |
+| `GET /api/devices/TEST-001/app-status` (no key) | PASS | HTTP 401 — `{"error":"Unauthorized"}` |
+| `POST /api/devices/TEST-001/reboot` (wrong key) | PASS | HTTP 401 — `{"error":"Unauthorized"}` |
+| `GET /api/devices/TEST-001/app-status` (missing package) | PASS | HTTP 400 — `{"error":"InvalidInput","message":"package is required"}` |
+
+### 8.2 Quyết định
+
+**APPROVE STAGING** — Evidence đầy đủ: image `be8c5b3b6a74` khớp với DEPLOY doc, container healthy, auth filter hoạt động đúng trên cả 2 endpoint mới, error handling đúng.
+
+**PRODUCTION GO-LIVE: CONDITIONAL HOLD** — Giữ điều kiện QA Lead đã yêu cầu: TC-A01 (app-status thiết bị thật) và TC-B01 (reboot thiết bị staging thật) phải PASS trước khi cho phép go-live production.
+
+### 8.3 Điều kiện đóng Gate Production
+
+Gate production sẽ được mở khi toàn bộ các bước sau được thực hiện:
+
+1. Kết nối thiết bị Android staging (USB hoặc TCP/IP: `adb connect <ip>:<port>`).
+2. Xác nhận thiết bị xuất hiện: `adb devices` — serial phải hiện trong danh sách.
+3. Mở 1 app bất kỳ trên thiết bị để đưa lên foreground (VD: Settings).
+4. **Chạy TC-A01** (app-status foreground):
+   ```bash
+   SERIAL=<serial-thiet-bi-staging>
+   PACKAGE=<package-dang-foreground>   # VD: com.android.settings
+   curl -H "x-api-key: sup3rsecr3tap1key@" \
+     "http://localhost:3339/api/devices/${SERIAL}/app-status?package=${PACKAGE}"
+   # Kỳ vọng: HTTP 200, running=true, state="Foreground"
+   ```
+5. **Chạy TC-B01** (reboot thiết bị staging — KHÔNG dùng thiết bị production):
+   ```bash
+   curl -X POST -H "x-api-key: sup3rsecr3tap1key@" \
+     "http://localhost:3339/api/devices/${SERIAL}/reboot"
+   # Kỳ vọng: HTTP 200, {"status":"RebootInitiated"}
+   # Thiết bị sẽ khởi động lại sau vài giây — bình thường
+   ```
+6. Ghi kết quả 2 TC vào mục 4.4 bảng Smoke Test (cập nhật dòng TC-A01/TC-B01 thành PASS).
+7. Thông báo DevOps Lead để đóng gate và cập nhật checklist mục 2.
+
+**Người chịu trách nhiệm đóng gate:** User / DevOps Engineer khi có thiết bị Android staging.
+**Deadline:** Không cấp bách — production go-live chờ đến khi đủ điều kiện, staging hiện tại đã ổn định.
+
+### 8.4 Monitor Note
+
+Theo dõi log container 24h đầu sau khi go-live staging:
+
+```bash
+# Xem log realtime
+docker logs -f kztek-adb-tool
+
+# Xem 50 dòng cuối
+docker logs --tail 50 kztek-adb-tool
+```
+
+Cần chú ý:
+- Lỗi `AdbCommandException` liên quan đến `app-status` hoặc `reboot` — nếu xuất hiện nhiều → investigate AdbService.
+- Response time > 5s cho `/api/devices/{serial}/app-status` — lệnh `dumpsys activity activities` có thể chậm trên một số thiết bị.
+
 ---
 *Deploy thực hiện bởi DevOps Engineer — 2026-08-24 23:29*
-*Chờ DevOps Lead approve (STEP-4.4) trước khi coi là production go-live.*
+*DevOps Lead Approve Staging — 2026-08-24 23:33. Production: CONDITIONAL HOLD (chờ TC-A01/TC-B01 thiết bị thật).*
