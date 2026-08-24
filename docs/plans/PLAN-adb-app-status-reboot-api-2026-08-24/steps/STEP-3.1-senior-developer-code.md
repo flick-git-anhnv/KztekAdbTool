@@ -137,7 +137,7 @@ Generated: 2026-08-24 22:40 | Branch: docker-deploy | By: Senior Developer
 ## Handoff Payload — cập nhật (sau fix vòng 2)
 - **do_not_redo:** KHÔNG tạo lại class CSS brand (đã có `btn-kz-outline-navy`/`btn-kz-outline-orange`). KHÔNG sửa icon nút cũ (UI-003 chỉ áp 2 nút mới — đã làm). KHÔNG thêm disabled state vào nút khác (ngoài scope).
 - **watch_out:** Spinner dùng `origHtml`/`origRebootHtml` để restore — nếu spinner hiển thị sai, kiểm tra `btnAppStatus.innerHTML` và `btnReboot.innerHTML` trong finally.
-- **next_inputs:** UI-001/002/003 đã fix tại commit <hash — điền sau commit>. UXR cần re-check 3 issue trên + xác nhận disabled state hoạt động đúng khi click nhanh.
+- **next_inputs:** UI-001/002/003 đã fix tại commit 23838dc. UXR cần re-check 3 issue trên + xác nhận disabled state hoạt động đúng khi click nhanh.
 
 ## Commit
 - Hash: 5297bc2 (commit gốc — code 2 API + UI)
