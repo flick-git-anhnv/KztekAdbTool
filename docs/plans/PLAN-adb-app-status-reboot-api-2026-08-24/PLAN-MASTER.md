@@ -1,7 +1,7 @@
 ---
 task: adb-app-status-reboot-api
 created: 2026-08-24
-updated: 2026-08-24 23:23
+updated: 2026-08-24 23:29
 status: in-progress
 last_step: 3.2
 workflow: WF-FEATURE
@@ -70,7 +70,7 @@ Cả 2 API tái dùng `ApiKeyEndpointFilter` + `ApiRequestLoggingEndpointFilter`
 |---|------|-------|--------|-----------|-----------------|
 | 4.1 | Viết test plan, thực thi test case (2 API + 2 nút UI), log kết quả | QA Engineer | ✅ | `steps/STEP-4.1-qa-engineer-test.md` | 2026-08-24 23:19 |
 | 4.2 | Sign-off chất lượng (P1 — bắt buộc QA Lead) | QA Lead | ✅ | `steps/STEP-4.2-qa-lead-signoff.md` | 2026-08-24 23:23 |
-| 4.3 | Deploy lên môi trường tương ứng, smoke test | DevOps Engineer | ⬜ | `steps/STEP-4.3-devops-engineer-deploy.md` | — |
+| 4.3 | Deploy lên môi trường tương ứng, smoke test | DevOps Engineer | ✅ | `steps/STEP-4.3-devops-engineer-deploy.md` | 2026-08-24 23:29 |
 | 4.4 | Approve staging, verify smoke test, approve + deploy production | DevOps Lead | ⬜ | `steps/STEP-4.4-devops-lead-approve.md` | — |
 
 ## Artifacts dự kiến (tổng)
@@ -141,6 +141,7 @@ Không có
 | 2026-08-24 23:09 | UXR re-check UI-001/002/003 — cả 3 RESOLVED (computed style Navy #251C53 / Cam #F05922 verified, disabled+spinner confirmed, aria-hidden="true" confirmed). Kết luận tổng quan: PASS. | UX/UI Reviewer |
 | 2026-08-24 23:19 | Bước 4.1 Done — Test plan + 14 TC thực thi. 12 Pass / 2 Blocked / 0 Fail. dotnet test 119/119 xanh. Không có bug. DOCX xuất OK. | QA Engineer |
 | 2026-08-24 23:23 | Bước 4.2 Done — QA Lead sign-off APPROVED CÓ ĐIỀU KIỆN. 0 P0/P1 bug, coverage đủ theo TDD error matrix. Deploy nội bộ OK; production yêu cầu 2 smoke test thiết bị thật (TC-A01 app-status + TC-B01 reboot). | QA Lead |
+| 2026-08-24 23:29 | Bước 4.3 Done — Build image `be8c5b3b6a74`, redeploy container healthy, 7 TC smoke test PASS (401/400/404 + HTML 2 nút mới). GATE CHƯA ĐÓNG: TC-A01+TC-B01 chờ thiết bị staging. DEPLOY doc + DOCX tạo xong. | DevOps Engineer |
 
 ---
 **Status icons:** ⬜ Todo | 🔄 In Progress | ✅ Done | 🛑 Blocked | ⏭️ Skipped

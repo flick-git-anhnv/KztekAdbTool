@@ -140,8 +140,8 @@ Không sửa code trong bước này (theo scope §4) — các Optional/FYI đ�
   4. Base commit hiện tại: `<sẽ điền sau commit>`.
 
 ## Commit
-- Hash: (sẽ điền sau commit)
-- Đã push: (sẽ điền sau push)
+- Hash: cc91122
+- Đã push: Yes (docker-deploy → origin/docker-deploy)
 
 ---
 **Status icons:** ⬜ Todo | 🔄 In Progress | ✅ Done | 🛑 Blocked | ⏭️ Skipped

@@ -61,7 +61,7 @@ Review kết quả test, đưa ra quyết định sign-off:
 - next_inputs: Môi trường deploy: docker-compose trên máy này, image `kztek/adb-tool`, port 3339 theo `docker-compose.yml` (file pending commit từ plan adb-reconnect). Nhánh hiện tại: `docker-deploy`. Sign-off QA Lead: APPROVED CÓ ĐIỀU KIỆN (2 smoke test thiết bị thật phải pass trước production). Artifact tham chiếu: `docs/test-cases/TC-adb-app-status-reboot-api.md` mục "QA Lead Sign-off".
 
 ## Commit
-- Hash: (điền sau commit)
+- Hash: 373973f
 - Đã push: No
 
 ---
