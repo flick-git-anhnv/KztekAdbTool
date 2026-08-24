@@ -1,7 +1,7 @@
 ---
 task: adb-app-status-reboot-api
 created: 2026-08-24
-updated: 2026-08-24 22:58
+updated: 2026-08-24 23:10
 status: in-progress
 last_step: 3.2
 workflow: WF-FEATURE
@@ -137,6 +137,7 @@ Không có
 | 2026-08-24 22:40 | Bước 3.1 Done — Code 2 API + UI + 15 test mới (119 total, 0 fail) + CODE-GRAPH cập nhật. Commit 5297bc2 pushed. | Senior Developer |
 | 2026-08-24 22:46 | Bước 3.2 Done — Tech Lead code review 18/18 PASS + security-audit-stride (OWASP 7P/0F/3NA; STRIDE 4P/0F/1NA/1FYI-rate-limit). Quyết định: APPROVE MERGE. 4 comment Optional/FYI ghi nhận cho follow-up (regex serial, rate limit reboot, API key trong HTML source, DRY refactor). | Tech Lead |
 | 2026-08-24 22:58 | Bước 3.3 Done — UX/UI Reviewer NEEDS-FIX: C3/C5/C6 PASS, 3 issue (UI-001 Medium: brand color, UI-002 Low: no loading state, UI-003 Low: aria-hidden). Không có blocker. Screenshot + report + DOCX created. | UX/UI Reviewer |
+| 2026-08-24 23:10 | Fix UI-001/002/003 theo UX review — btn-kz-outline-navy/orange (CSS), disabled+spinner (JS), aria-hidden (cshtml). Build 0 error, 119/119 test pass. Chờ UXR re-check. | Senior Developer |
 
 ---
 **Status icons:** ⬜ Todo | 🔄 In Progress | ✅ Done | 🛑 Blocked | ⏭️ Skipped

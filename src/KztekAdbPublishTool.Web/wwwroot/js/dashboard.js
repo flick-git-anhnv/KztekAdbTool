@@ -593,6 +593,10 @@
                 var serial = serials[0];
                 var url = '/api/devices/' + encodeURIComponent(serial) + '/app-status?package=' + encodeURIComponent(pkg);
                 appendLog('Kiểm tra trạng thái app "' + pkg + '" trên ' + serial + '...');
+                // UI-002: disable button + spinner khi API call đang chạy
+                btnAppStatus.disabled = true;
+                var origHtml = btnAppStatus.innerHTML;
+                btnAppStatus.innerHTML = '<span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>Đang kiểm tra...';
                 try {
                     var r = await fetch(url, { headers: apiHeaders() });
                     var data = await r.json().catch(function () { return null; });
@@ -607,6 +611,10 @@
                         showToast('Lỗi: ' + errMsg, 'danger');
                     }
                 } catch (ex) { appendLog('Lỗi: ' + ex.message); }
+                finally {
+                    btnAppStatus.disabled = false;
+                    btnAppStatus.innerHTML = origHtml;
+                }
             });
         }
 
@@ -625,6 +633,10 @@
 
                 var url = '/api/devices/' + encodeURIComponent(serial) + '/reboot';
                 appendLog('Gửi lệnh reboot tới ' + serial + '...');
+                // UI-002: disable button + spinner khi API call đang chạy (ngăn double-click reboot)
+                btnReboot.disabled = true;
+                var origRebootHtml = btnReboot.innerHTML;
+                btnReboot.innerHTML = '<span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>Đang reboot...';
                 try {
                     var r = await fetch(url, { method: 'POST', headers: apiHeaders() });
                     var data = await r.json().catch(function () { return null; });
@@ -637,6 +649,10 @@
                         showToast('Lỗi: ' + errMsg, 'danger');
                     }
                 } catch (ex) { appendLog('Lỗi: ' + ex.message); }
+                finally {
+                    btnReboot.disabled = false;
+                    btnReboot.innerHTML = origRebootHtml;
+                }
             });
         }
     }

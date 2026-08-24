@@ -116,8 +116,31 @@ Generated: 2026-08-24 22:40 | Branch: docker-deploy | By: Senior Developer
   2. TDD §12 Code Review Checklist — danh sách 14 mục reviewer cần verify.
   3. Các file thay đổi chính: `AppStatusEndpoints.cs`, `RebootEndpoints.cs`, `AdbService.cs`, `dashboard.js`, `Index.cshtml`.
 
+## Fix vòng 2 theo UX review (UI-001/002/003)
+
+**Ngày:** 2026-08-24 | **Agent:** Senior Developer
+
+### Đã fix:
+- **UI-001 (Medium):** Thêm 2 class CSS brand KZTEK vào `wwwroot/css/dashboard.css`: `btn-kz-outline-navy` (border/text Navy `#251C53`, hover nền Navy chữ trắng) và `btn-kz-outline-orange` (border/text Cam `#F05922`, hover nền Cam chữ trắng). Cập nhật `Pages/Index.cshtml`: `btn-check-app-status` dùng `btn-kz-outline-navy`, `btn-reboot-device` dùng `btn-kz-outline-orange`. KHÔNG override toàn cục `btn-outline-primary`/`btn-outline-warning`.
+- **UI-002 (Low):** Cập nhật 2 handler trong `wwwroot/js/dashboard.js`: `button.disabled = true` trước `fetch()`, restore `false` trong `finally`; thêm `<span class="spinner-border spinner-border-sm">` thay thế innerHTML tạm thời khi đang gọi API.
+- **UI-003 (Low):** Thêm `aria-hidden="true"` cho `<i class="bi bi-info-circle">` (btn-check-app-status) và `<i class="bi bi-arrow-repeat">` (btn-reboot-device) trong `Pages/Index.cshtml`.
+
+### Files đã sửa:
+- `src/KztekAdbPublishTool.Web/wwwroot/css/dashboard.css` — thêm `.btn-kz-outline-navy` + `.btn-kz-outline-orange`
+- `src/KztekAdbPublishTool.Web/Pages/Index.cshtml` — đổi class 2 nút + aria-hidden
+- `src/KztekAdbPublishTool.Web/wwwroot/js/dashboard.js` — disabled state + spinner 2 handler
+
+### Verification:
+- `dotnet build` — 0 error, 0 warning
+- `dotnet test` — 119/119 pass, 0 fail
+
+## Handoff Payload — cập nhật (sau fix vòng 2)
+- **do_not_redo:** KHÔNG tạo lại class CSS brand (đã có `btn-kz-outline-navy`/`btn-kz-outline-orange`). KHÔNG sửa icon nút cũ (UI-003 chỉ áp 2 nút mới — đã làm). KHÔNG thêm disabled state vào nút khác (ngoài scope).
+- **watch_out:** Spinner dùng `origHtml`/`origRebootHtml` để restore — nếu spinner hiển thị sai, kiểm tra `btnAppStatus.innerHTML` và `btnReboot.innerHTML` trong finally.
+- **next_inputs:** UI-001/002/003 đã fix tại commit <hash — điền sau commit>. UXR cần re-check 3 issue trên + xác nhận disabled state hoạt động đúng khi click nhanh.
+
 ## Commit
-- Hash: 5297bc2
+- Hash: 5297bc2 (commit gốc — code 2 API + UI)
 - Đã push: Yes (docker-deploy → origin/docker-deploy)
 
 ---

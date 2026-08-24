@@ -138,6 +138,47 @@
     z-index: 1;
 }
 
+/* ── Brand outline buttons (UI-001 — thay Bootstrap default) ─ */
+/* Navy outline — dùng cho btn-check-app-status */
+.btn-kz-outline-navy {
+    color: #251C53;
+    border-color: #251C53;
+    background-color: transparent;
+}
+.btn-kz-outline-navy:hover,
+.btn-kz-outline-navy:focus,
+.btn-kz-outline-navy:active {
+    color: #ffffff;
+    background-color: #251C53;
+    border-color: #251C53;
+}
+.btn-kz-outline-navy:disabled,
+.btn-kz-outline-navy.disabled {
+    color: #251C53;
+    opacity: 0.55;
+    background-color: transparent;
+}
+
+/* Orange outline — dùng cho btn-reboot-device */
+.btn-kz-outline-orange {
+    color: #F05922;
+    border-color: #F05922;
+    background-color: transparent;
+}
+.btn-kz-outline-orange:hover,
+.btn-kz-outline-orange:focus,
+.btn-kz-outline-orange:active {
+    color: #ffffff;
+    background-color: #F05922;
+    border-color: #F05922;
+}
+.btn-kz-outline-orange:disabled,
+.btn-kz-outline-orange.disabled {
+    color: #F05922;
+    opacity: 0.55;
+    background-color: transparent;
+}
+
 /* ── Responsive tweaks ────────────────────────────────── */
 @media (max-width: 992px) {
     .kz-action-panel {
