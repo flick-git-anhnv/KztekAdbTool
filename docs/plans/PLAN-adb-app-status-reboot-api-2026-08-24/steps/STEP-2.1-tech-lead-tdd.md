@@ -63,8 +63,8 @@ Viết `docs/tech-design/TDD-adb-app-status-reboot-api.md` — hoàn tất theo 
   7. Filter chain BẮT BUỘC: `.AddEndpointFilter<ApiRequestLoggingEndpointFilter>()` (OUTER) + `.AddEndpointFilter<ApiKeyEndpointFilter>()` (INNER) — TDD §3.3.
 
 ## Commit
-- Hash: (điền sau commit)
-- Đã push: (điền sau push)
+- Hash: 6e900b9
+- Đã push: Yes (docker-deploy → origin/docker-deploy)
 
 ---
 **Status icons:** ⬜ Todo | 🔄 In Progress | ✅ Done | 🛑 Blocked | ⏭️ Skipped
