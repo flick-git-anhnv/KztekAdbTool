@@ -2,8 +2,8 @@
 step: 4.1
 plan: ../PLAN-MASTER.md
 agent: QA Engineer
-status: todo
-completed_at: ~
+status: done
+completed_at: 2026-08-24 23:19
 deps: ["3.3"]
 ---
 
@@ -52,21 +52,37 @@ Xuất DOCX sau khi viết.
 - [ ] Cập nhật STEP file này + PLAN-MASTER.md Bước 4.1 → ✅
 
 ## Đã làm
-(để trống)
+
+1. Đọc TDD §3 (API contract), §9 (error matrix), PLAN-MASTER Handoff từ STEP-3.3.
+2. Kiểm tra `adb devices` → trống (không có thiết bị Android).
+3. Khởi động app: `dotnet run --urls http://localhost:5099` → HTTP 200 xác nhận.
+4. Chạy `dotnet test` → 119/119 PASS (0 fail).
+5. Thực thi 5 HTTP integration TC bằng curl (A04/A05/A06/B02/B03) — ghi response thật.
+6. Đánh Blocked cho TC-A01/A02/A03/B01 (cần thiết bị thật) + xác nhận gián tiếp qua unit test.
+7. Đánh Pass (unit test) cho TC-A07/B04 (DeviceOffline) qua `CheckDeviceState_OfflineDevice_Returns422`.
+8. Đánh Pass (UXR) cho TC-C01/C02/C03 → reference STEP-3.3 Playwright kịch bản a–e.
+9. Dừng app sau khi test.
+10. Viết test plan + TC file, xuất DOCX cả 2.
 
 ## Artifact
-(để trống)
+
+- `docs/test-plans/TEST-PLAN-adb-app-status-reboot-api.md` + `.docx`
+- `docs/test-cases/TC-adb-app-status-reboot-api.md` + `.docx`
 
 ## Quyết định quan trọng
-(để trống)
+
+1. TC-A07 / TC-B04 (DeviceOffline qua HTTP): không thể dựng scenario in-memory không có thiết bị → đánh "Pass (unit test)" dựa trên `CheckDeviceState_OfflineDevice_Returns422` đã xanh — đây là public static method được test trực tiếp, không cần mock toàn bộ DI stack.
+2. TC-B01 (reboot thật): đánh Blocked — KHÔNG chạy trên thiết bị không rõ chủ sở hữu theo quy tắc task (§4).
+3. Không phát hiện bug: 5 TC HTTP trả đúng code + schema theo TDD §3 và error matrix §9. Không cần tạo BUG file.
 
 ## Handoff Payload — bước sau đọc phần này
-- do_not_redo: (để trống)
-- watch_out: (để trống)
-- next_inputs: (để trống)
+
+- **do_not_redo:** KHÔNG chạy lại curl test đã có (A04/A05/A06/B02/B03) — kết quả đã được ghi; KHÔNG re-run unit test (119/119 đã xanh); KHÔNG re-export DOCX trừ khi sửa nội dung .md.
+- **watch_out:** 2 TC Blocked (TC-A01/A02/A03/B01) cần thiết bị Android thật để sign-off hoàn chỉnh — QA Lead cần quyết định có chấp nhận sign-off với 2 Blocked này hay yêu cầu test trên thiết bị trước; TC-A07/B04 đánh "Pass (unit test)" không phải "Pass (HTTP)" — nếu QA Lead muốn HTTP evidence thì cần thiết bị offline thật.
+- **next_inputs:** `docs/test-cases/TC-adb-app-status-reboot-api.md` (kết quả chi tiết 14 TC); tổng: 12 Pass, 2 Blocked, 0 Fail; không có bug P0/P1; dotnet test 119/119 xanh; khuyến nghị sign-off: APPROVED với ghi chú "2 TC cần thiết bị thật — test khi có thiết bị, không blocker deploy nội bộ".
 
 ## Commit
-- Hash: (chưa có)
+- Hash: (điền sau commit)
 - Đã push: No
 
 ---
